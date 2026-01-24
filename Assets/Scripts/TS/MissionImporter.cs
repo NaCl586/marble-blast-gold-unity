@@ -109,8 +109,7 @@ namespace TS
                         startPad.transform.localPosition = position;
                         startPad.transform.localRotation = rotation;
 
-                        globalMarble.transform.position = startPad.transform.GetChild(0).position;
-                        CameraController.instance.ResetCam();
+                        globalMarble.GetComponent<Marble>().Respawn();
                     }
 
                     else if (objectName.ToLower() == "trapdoor")

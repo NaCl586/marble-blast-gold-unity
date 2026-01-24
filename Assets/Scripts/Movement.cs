@@ -16,7 +16,9 @@ public static class GravitySystem
 [RequireComponent(typeof(SphereCollider))]
 public class Movement : MonoBehaviour
 {
-	public bool isColliding;
+	public bool canSpin = true;
+	public bool canMove = true;
+	public bool canJump = true;
 	[Space]
 	public float maxRollVelocity = 15f;
 	public float angularAcceleration = 75f;
@@ -33,21 +35,13 @@ public class Movement : MonoBehaviour
 	public float bounceRestitution = 0.5f;
 	public float bounce = 0;
 
-	private float remainingTime = 0.0f;
-
 	public Vector3 marbleVelocity;
 	public Vector3 marbleAngularVelocity;
 	public Texture collidedTexture;
 
-	private float marbleRadius =>
-		sphereCollider.radius * Mathf.Max(
-			transform.lossyScale.x,
-			transform.lossyScale.y,
-			transform.lossyScale.z
-		);
-
-	private Vector2 inputMovement => new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")) + _fakeInput;
-	private Vector2 _fakeInput = Vector2.zero;
+	private float marbleRadius;
+	private Vector2 inputMovement => new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")) + fakeInput;
+	private Vector2 fakeInput = Vector2.zero;
 
 	private bool Jump => Input.GetButton("Jump");
 
@@ -81,7 +75,6 @@ public class Movement : MonoBehaviour
 		public Vector3 lastScale; // NEW
 	}
 
-
 	private List<MeshData> meshes;
 
 	private Rigidbody rigidBody;
@@ -89,6 +82,19 @@ public class Movement : MonoBehaviour
 	private int collisions;
 	private float lastJump;
 	private Vector3 lastNormal;
+
+	Vector3 position;
+	Vector3 oldPos;
+	Vector3 newPos;
+	Quaternion prevRot;
+	float fixedDeltaTimeAccumulator = 0.0f;
+
+	private bool wasCanMove = true;
+	private Vector2 lockedXZ;
+	private float baseStaticFriction;
+	private float baseKineticFriction;
+
+	private bool hasPosition = false;
 
 	class CollisionInfo
 	{
@@ -98,11 +104,28 @@ public class Movement : MonoBehaviour
 		public Collider collider;
 		public float friction;
 		public float restitution;
-		public float penetration;
+		public float contactDistance;
 	}
+
+	public void SetPosition(Vector3 newPos)
+	{
+		hasPosition = true;
+
+		marbleVelocity = Vector3.zero;
+		marbleAngularVelocity = Vector3.zero;
+
+		position = newPos;
+		oldPos = newPos;
+
+		transform.position = newPos;
+	}
+
 
 	void Start()
 	{
+		baseStaticFriction = staticFriction;
+		baseKineticFriction = kineticFriction;
+
 		rigidBody = gameObject.GetComponent<Rigidbody>();
 		rigidBody.maxAngularVelocity = Mathf.Infinity;
 
@@ -113,6 +136,11 @@ public class Movement : MonoBehaviour
 		meshes = new List<MeshData>();
 		colTests = new List<MeshCollider>();
 
+		marbleRadius = sphereCollider.radius * Mathf.Max(
+			transform.lossyScale.x,
+			transform.lossyScale.y,
+			transform.lossyScale.z
+		);
 	}
 
 	public void GenerateMeshData()
@@ -142,179 +170,161 @@ public class Movement : MonoBehaviour
 		});
 	}
 
-
-	public void AddMesh(MeshCollider _meshCollider)
-	{
-		colTests.Add(_meshCollider);
-		GenerateMeshInfo(_meshCollider);
-	}
-
 	void FixedUpdate()
 	{
-		float _dt = Time.fixedDeltaTime;
-		remainingTime += _dt;
+		if (!hasPosition)
+			return;
 
-		// Always subdivide into 0.005s slices (200 Hz physics)
-		const float STEP_SIZE = 0.005f;
-
-		while (remainingTime >= STEP_SIZE)
+		// Detect canMove turning OFF
+		if (wasCanMove && !canMove)
 		{
-			float _loopTime = STEP_SIZE;
-			AdvancePhysics(ref _loopTime);
-			remainingTime -= _loopTime;
+			lockedXZ = new Vector2(position.x, position.z);
+
+			// Disable friction
+			staticFriction = 0f;
+			kineticFriction = 0f;
 		}
+
+		// Detect canMove turning ON
+		if (!wasCanMove && canMove)
+		{
+			// Restore friction
+			staticFriction = baseStaticFriction;
+			kineticFriction = baseKineticFriction;
+		}
+
+		wasCanMove = canMove;
+
+		float timeRemaining = Time.fixedDeltaTime;
+
+		const float STEP_SIZE = 0.004f;
+
+		oldPos = position;
+		prevRot = transform.rotation;
+
+		var it = 0;
+
+		do
+		{
+			if (timeRemaining <= 0)
+				break;
+
+			var timeStep = STEP_SIZE;
+			if (timeRemaining < timeStep)
+				timeStep = timeRemaining;
+
+			AdvancePhysics(ref timeStep);
+
+			timeRemaining -= timeStep;
+
+			it++;
+
+			if (timeStep == 0 || it > 10)
+				break;
+		} while (true);
+
+		transform.position = position;
+
+        if (canSpin)
+        {
+			Vector3 vector3 = marbleAngularVelocity;
+			float num1 = vector3.magnitude;
+			if (num1 <= 0.0000001f)
+				return;
+
+			Quaternion quaternion = Quaternion.AngleAxis(Time.fixedDeltaTime * num1 * Mathf.Rad2Deg, vector3 * (1f / num1));
+			quaternion.Normalize();
+			transform.rotation = quaternion * transform.rotation;
+			transform.rotation.Normalize();
+		}
+	}
+
+	List<CollisionInfo> FindContacts(Bounds bounds)
+	{
+		var contacts = new List<CollisionInfo>();
+		float _radius = marbleRadius + 0.0001f;
+
+		for (int _index = 0; _index < colTests.Count; _index++)
+		{
+			MeshData _mesh = meshes[_index];
+			MeshCollider _meshCollider = _mesh.collider;
+
+			if (_mesh.mesh == null || !_meshCollider.enabled)
+				continue;
+
+			if (!_meshCollider.bounds.Intersects(bounds))
+				continue;
+
+			UpdateMeshTransform(_mesh);
+
+			int _length = _mesh.triangles.Length;
+
+			for (int _i = 0; _i < _length; _i += 3)
+			{
+				Vector3 _p0 = _mesh.localToWorld.MultiplyPoint3x4(
+					_mesh.localVertices[_mesh.triangles[_i]]
+				);
+				Vector3 _p1 = _mesh.localToWorld.MultiplyPoint3x4(
+					_mesh.localVertices[_mesh.triangles[_i + 1]]
+				);
+				Vector3 _p2 = _mesh.localToWorld.MultiplyPoint3x4(
+					_mesh.localVertices[_mesh.triangles[_i + 2]]
+				);
+
+				Vector3 _normal = Vector3.Cross(_p1 - _p0, _p2 - _p0).normalized;
+
+				var closest = Vector3.zero;
+				var contactNormal = Vector3.zero;
+				var res = CollisionHelpers.TriangleSphereIntersection(_p0, _p1, _p2, _normal, position, marbleRadius, out closest, out contactNormal);
+				// var closest = Collision.ClosestPtPointTriangle(position, radius, v0, v, v2, surfacenormal);
+				if (res)
+				{
+					var contactDist = (closest - position).sqrMagnitude;
+					// Debug.drawTriangle(v0, v, v2);
+					if (contactDist <= marbleRadius * marbleRadius)
+					{
+						if (Vector3.Dot(position - closest, _normal) > 0)
+						{
+							Vector3 colliderVelocity = Vector3.zero;
+
+							if (_meshCollider.attachedRigidbody != null)
+							{
+								colliderVelocity = _meshCollider.attachedRigidbody.GetPointVelocity(closest);
+							}
+							else if (_mesh != null)
+							{
+								colliderVelocity =
+									(_mesh.collider.transform.position - _mesh.lastPosition)
+									/ Time.fixedDeltaTime;
+							}
+
+							contacts.Add(new CollisionInfo
+							{
+								point = closest,
+								normal = contactNormal.normalized,
+								contactDistance = Mathf.Sqrt(contactDist),
+								restitution = _meshCollider.sharedMaterial?.bounciness ?? 0.5f,
+								friction = _meshCollider.sharedMaterial?.dynamicFriction ?? 0.5f,
+								velocity = colliderVelocity
+							});
+
+						}
+					}
+				}
+			}
+		}
+
+		return contacts;
 	}
 
 	private void AdvancePhysics(ref float _dt)
 	{
-		Vector3 _pos = transform.position;
-		Quaternion _rot = transform.rotation;
-		Vector3 _velocity = marbleVelocity;
-		Vector3 _omega = marbleAngularVelocity;
+		var searchBox = sphereCollider.bounds;
+		searchBox.Expand(0.1f);
 
-		bool usedSweep = false;
-		List<CollisionInfo> _contacts = null;
+		var contacts = FindContacts(searchBox);
 
-		// ============================================================
-		// 1. EARLY SWEEP (converted to flagged path)
-		// ============================================================
-		float _travelDist = _velocity.magnitude * _dt;
-		if (_travelDist > marbleRadius)
-		{
-			if (Physics.SphereCast(_pos, marbleRadius, _velocity.normalized, out var _hit, _travelDist))
-			{
-				float _travelTime = _hit.distance / _velocity.magnitude;
-				_dt = Mathf.Min(_dt, _travelTime);
-
-				var _contact = new CollisionInfo
-				{
-					normal = _hit.normal,
-					point = _hit.point,
-					penetration = 0f,
-					restitution = IsFloor(_hit.normal)
-						? (_hit.collider.sharedMaterial?.bounciness ?? 0.5f)
-						: 0f,
-					friction = _hit.collider.sharedMaterial?.dynamicFriction ?? 0.5f,
-					velocity = _hit.collider.attachedRigidbody
-						? _hit.collider.attachedRigidbody.GetPointVelocity(_hit.point)
-						: Vector3.zero,
-					collider = _hit.collider
-				};
-
-				_contacts = new List<CollisionInfo> { _contact };
-				usedSweep = true;
-			}
-		}
-
-		// ============================================================
-		// 2. CONTACT GENERATION (only if no sweep)
-		// ============================================================
-		if (!usedSweep)
-		{
-			_contacts = new List<CollisionInfo>();
-			float _radius = marbleRadius + 0.0001f;
-
-			for (int _index = 0; _index < colTests.Count; _index++)
-			{
-				MeshData _mesh = meshes[_index];
-				MeshCollider _meshCollider = _mesh.collider;
-
-				if (_mesh.mesh == null || !_meshCollider.enabled)
-					continue;
-
-				UpdateMeshTransform(_mesh);
-
-				Vector3 _localPos = _pos;
-				int _length = _mesh.triangles.Length;
-
-				for (int _i = 0; _i < _length; _i += 3)
-				{
-					Vector3 _p0 = _mesh.localToWorld.MultiplyPoint3x4(
-						_mesh.localVertices[_mesh.triangles[_i]]
-					);
-					Vector3 _p1 = _mesh.localToWorld.MultiplyPoint3x4(
-						_mesh.localVertices[_mesh.triangles[_i + 1]]
-					);
-					Vector3 _p2 = _mesh.localToWorld.MultiplyPoint3x4(
-						_mesh.localVertices[_mesh.triangles[_i + 2]]
-					);
-
-					Vector3 _normal = Vector3.Cross(_p1 - _p0, _p2 - _p0).normalized;
-					Vector3 _closest = ClosestPointOnTriangle(_localPos, _p0, _p1, _p2);
-					Vector3 _diff = _localPos - _closest;
-
-					if (_diff.sqrMagnitude <= _radius * _radius &&
-						Vector3.Dot(_diff, _normal) >= 0.0f)
-					{
-						float _penetration = _radius - _diff.magnitude;
-						if (_penetration > 0)
-							AddContact(_meshCollider, _closest, _diff.normalized,
-								_penetration, _contacts, _mesh);
-					}
-
-					TestEdge(_localPos, _p0, _p1, _radius, _meshCollider, _contacts, _mesh);
-					TestEdge(_localPos, _p1, _p2, _radius, _meshCollider, _contacts, _mesh);
-					TestEdge(_localPos, _p2, _p0, _radius, _meshCollider, _contacts, _mesh);
-
-					TestVertex(_localPos, _p0, _radius, _meshCollider, _contacts, _mesh);
-					TestVertex(_localPos, _p1, _radius, _meshCollider, _contacts, _mesh);
-					TestVertex(_localPos, _p2, _radius, _meshCollider, _contacts, _mesh);
-				}
-			}
-
-			isColliding = _contacts.Count > 0;
-
-			// ============================================================
-			// 3. CONTACT FILTERING
-			// ============================================================
-			if (_contacts.Count > 1)
-			{
-				CollisionInfo _deepest = _contacts[0];
-				for (int i = 1; i < _contacts.Count; i++)
-					if (_contacts[i].penetration > _deepest.penetration)
-						_deepest = _contacts[i];
-
-				_contacts.Clear();
-				_contacts.Add(_deepest);
-			}
-
-			if (_contacts.Count > 0)
-			{
-				CollisionInfo best = _contacts[0];
-				float bestDot = Vector3.Dot(best.normal, -GravitySystem.Gravity.normalized);
-
-				for (int i = 1; i < _contacts.Count; i++)
-				{
-					float d = Vector3.Dot(_contacts[i].normal,
-						-GravitySystem.Gravity.normalized);
-					if (d > bestDot)
-					{
-						bestDot = d;
-						best = _contacts[i];
-					}
-				}
-
-				_contacts.Clear();
-				_contacts.Add(best);
-			}
-		}
-
-		// ============================================================
-		// 4. RESOLUTION + INTEGRATION (single exit path)
-		// ============================================================
-		UpdateMove(ref _dt, ref _velocity, ref _omega, _contacts);
-		UpdateIntegration(_dt, ref _pos, ref _rot, _velocity, _omega);
-
-		transform.position = _pos;
-		transform.rotation = _rot;
-		marbleVelocity = _velocity;
-		marbleAngularVelocity = _omega;
-	}
-
-
-	private bool IsFloor(Vector3 n)
-	{
-		return Vector3.Dot(n, Vector3.up) > 0.7f;
+		UpdateMove(ref _dt, contacts);
 	}
 
 	void UpdateMeshTransform(MeshData data)
@@ -331,99 +341,6 @@ public class Movement : MonoBehaviour
 			data.lastPosition = t.position;
 			data.lastRotation = t.rotation;
 			data.lastScale = t.lossyScale; // NEW
-		}
-	}
-
-	// Utility: Closest point on triangle (barycentric method)
-	private Vector3 ClosestPointOnTriangle(Vector3 _p, Vector3 _a, Vector3 _b, Vector3 _c)
-	{
-		Vector3 _ab = _b - _a;
-		Vector3 _ac = _c - _a;
-		Vector3 _ap = _p - _a;
-
-		float _d1 = Vector3.Dot(_ab, _ap);
-		float _d2 = Vector3.Dot(_ac, _ap);
-		if (_d1 <= 0f && _d2 <= 0f) return _a;
-
-		Vector3 _bp = _p - _b;
-		float _d3 = Vector3.Dot(_ab, _bp);
-		float _d4 = Vector3.Dot(_ac, _bp);
-		if (_d3 >= 0f && _d4 <= _d3) return _b;
-
-		float _vc = _d1 * _d4 - _d3 * _d2;
-		if (_vc <= 0f && _d1 >= 0f && _d3 <= 0f)
-		{
-			float _v = _d1 / (_d1 - _d3);
-			return _a + _v * _ab;
-		}
-
-		Vector3 _cp = _p - _c;
-		float _d5 = Vector3.Dot(_ab, _cp);
-		float _d6 = Vector3.Dot(_ac, _cp);
-		if (_d6 >= 0f && _d5 <= _d6) return _c;
-
-		float _vb = _d5 * _d2 - _d1 * _d6;
-		if (_vb <= 0f && _d2 >= 0f && _d6 <= 0f)
-		{
-			float _w = _d2 / (_d2 - _d6);
-			return _a + _w * _ac;
-		}
-
-		float _va = _d3 * _d6 - _d5 * _d4;
-		if (_va <= 0f && (_d4 - _d3) >= 0f && (_d5 - _d6) >= 0f)
-		{
-			float _w = (_d4 - _d3) / ((_d4 - _d3) + (_d5 - _d6));
-			return _b + _w * (_c - _b);
-		}
-
-		float _denom = 1f / (_va + _vb + _vc);
-		float _v2 = _vb * _denom;
-		float _w2 = _vc * _denom;
-		return _a + _ab * _v2 + _ac * _w2;
-	}
-
-	// Edge test
-	void TestEdge(
-		Vector3 _center,
-		Vector3 _a,
-		Vector3 _b,
-		float _radius,
-		Collider _col,
-		List<CollisionInfo> _contacts,
-		MeshData _mesh
-	)
-	{
-		Vector3 _ab = _b - _a;
-		float _t = Mathf.Clamp01(Vector3.Dot(_center - _a, _ab) / _ab.sqrMagnitude);
-		Vector3 _closest = _a + _t * _ab;
-		Vector3 _diff = _center - _closest;
-
-		if (_diff.sqrMagnitude <= _radius * _radius)
-		{
-			float _penetration = _radius - _diff.magnitude;
-			if (_penetration > 0)
-				AddContact(_col, _closest, _diff.normalized, _penetration, _contacts, _mesh);
-		}
-	}
-
-
-	// Vertex test
-	// Vertex test
-	void TestVertex(
-		Vector3 _center,
-		Vector3 _v,
-		float _radius,
-		Collider _col,
-		List<CollisionInfo> _contacts,
-		MeshData _mesh
-	)
-	{
-		Vector3 _diff = _center - _v;
-		if (_diff.sqrMagnitude <= _radius * _radius)
-		{
-			float _penetration = _radius - _diff.magnitude;
-			if (_penetration > 0)
-				AddContact(_col, _v, _diff.normalized, _penetration, _contacts, _mesh);
 		}
 	}
 
@@ -454,105 +371,135 @@ public class Movement : MonoBehaviour
 		{
 			point = point,
 			normal = normal.normalized,
-			penetration = penetration,
+			// penetration = penetration,
 			restitution = _col.sharedMaterial?.bounciness ?? 0.5f,
 			friction = _col.sharedMaterial?.dynamicFriction ?? 0.5f,
 			velocity = colliderVelocity
 		});
 	}
 
-
-	void ApplyCollisionState(List<CollisionInfo> _contacts)
+	void UpdateMove(ref float _dt, List<CollisionInfo> _contacts)
 	{
-		if (_contacts.Count == 0)
-		{
-			collidedTexture = null;
-			lastNormal = Vector3.up;
-			return;
-		}
-
-		// Average normals
-		Vector3 _avgNormal = Vector3.zero;
-		foreach (var c in _contacts) _avgNormal += c.normal;
-		_avgNormal.Normalize();
-
-		lastNormal = _avgNormal;
-
-		// Project velocity onto surface tangent
-		marbleVelocity -= Vector3.Dot(marbleVelocity, _avgNormal) * _avgNormal;
-
-		// Skin offset: lift slightly above surface
-		transform.position += _avgNormal * 0.01f;
-	}
-
-	void UpdateIntegration(float _dt, ref Vector3 _pos, ref Quaternion _rot, Vector3 _vel, Vector3 _avel)
-	{
-		_pos += _vel * _dt;
-		Vector3 vector3 = _avel;
-		float num1 = vector3.magnitude;
-		if (num1 <= 0.0000001f)
-			return;
-
-		Quaternion quaternion = Quaternion.AngleAxis(_dt * num1 * Mathf.Rad2Deg, vector3 * (1f / num1));
-		quaternion.Normalize();
-		_rot = quaternion * _rot;
-		_rot.Normalize();
-	}
-
-	void UpdateMove(ref float _dt, ref Vector3 _velocity, ref Vector3 _angVelocity, List<CollisionInfo> _contacts)
-	{
-		surfaceVelocity = Vector3.zero;
-		if (_contacts.Count > 0)
-			surfaceVelocity = _contacts[0].velocity;
-
-		// Convert world → relative
-		_velocity -= surfaceVelocity;
-
 		// Compute player input forces
-		bool _isMoving = ComputeMoveForces(_angVelocity, out var _torque, out var _targetAngVel);
+		bool isMoving = ComputeMoveForces(marbleAngularVelocity, out var aControl, out var desiredOmega);
 
 		// First pass: cancel velocity with bounce enabled
-		VelocityCancel(_contacts, ref _velocity, ref _angVelocity, !_isMoving, false);
+		bool stoppedPaths = false;
+
+		VelocityCancel(_contacts, !isMoving, false, ref stoppedPaths);
 
 		// External forces (gravity, air control)
-		Vector3 _externalForces = GetExternalForces(_dt, _contacts);
+		Vector3 A = GetExternalForces(_dt, _contacts);
 
 		// Apply contact forces (friction, jump, bounce)
 		ApplyContactForces(
 			_dt,
 			_contacts,
-			!_isMoving,
-			_torque,
-			_targetAngVel,
-			ref _velocity,
-			ref _angVelocity,
-			ref _externalForces,
-			out var _angAccel);
+			!isMoving,
+			aControl,
+			desiredOmega,
+			ref A,
+			out Vector3 a);
 
 		// Integrate forces
-		_velocity += _externalForces * _dt;
-		_angVelocity += _angAccel * _dt;
+		marbleVelocity += A * _dt;
+		marbleAngularVelocity += a * _dt;
 
 		// Second pass: cancel velocity with bounce disabled
-		VelocityCancel(_contacts, ref _velocity, ref _angVelocity, !_isMoving, true);
+		VelocityCancel(_contacts, !isMoving, true, ref stoppedPaths);
 
-		// Contact time adjustment
-		float _contactTime = _dt;
+		var testDt = _dt;
+		TestMove(ref position, marbleVelocity, ref testDt);
 
-		if (_dt * 0.99f > _contactTime)
+		if (testDt != _dt)
 		{
-			_velocity -= _externalForces * (_dt - _contactTime);
-			_angVelocity -= _angAccel * (_dt - _contactTime);
-			_dt = _contactTime;
+			var diff = _dt - testDt;
+			marbleVelocity -= A * diff;
+			marbleAngularVelocity -= a * diff;
+			_dt = testDt;
 		}
 
-		// Extend contact time if contacts exist
-		if (_contacts.Count != 0)
-			_contactTime += _dt;
+		var expectedPos = position;
 
-		_velocity += surfaceVelocity;
+		var newPos = NudgeToContacts(marbleVelocity, expectedPos, _contacts);
+		if (marbleVelocity.sqrMagnitude > 1e-8f)
+		{
+			var posDiff = newPos - expectedPos;
+			if (posDiff.sqrMagnitude > 1e-8)
+			{
+				var velDiffProj = marbleVelocity * Vector3.Dot(posDiff, marbleVelocity) / (marbleVelocity.sqrMagnitude);
+				var expectedProjPos = expectedPos + velDiffProj;
+				var updatedTimestep = (expectedProjPos - position).magnitude / marbleVelocity.magnitude;
+
+				var tDiff = updatedTimestep - _dt;
+				if (tDiff > 0)
+				{
+					marbleVelocity -= A * tDiff;
+					marbleAngularVelocity -= a * tDiff;
+					_dt = updatedTimestep;
+				}
+			}
+		}
+
+		if (!canMove)
+		{
+			marbleVelocity.x = 0f;
+			marbleVelocity.z = 0f;
+
+			newPos.x = lockedXZ.x;
+			newPos.z = lockedXZ.y;
+		}
+
+		position = newPos;
 	}
 
+	Vector3 NudgeToContacts(Vector3 velocity, Vector3 position, List<CollisionInfo> contacts)
+	{
+		var it = 0;
+		var prevResolved = 0;
+		do
+		{
+			var resolved = 0;
+			foreach (var contact in contacts)
+			{
+				// Check if we are on wrong side of the triangle
+				if (Vector3.Dot(contact.normal, position) - Vector3.Dot(contact.normal, contact.point) < 0 || contact.velocity.sqrMagnitude > 0.00001f)
+				{
+					continue;
+				}
+
+				var planeD = -Vector3.Dot(contact.normal, contact.point);
+
+				var t = Vector3.Dot(contact.point - position, contact.normal) / contact.normal.sqrMagnitude;
+				var intersect = position + t * contact.normal;
+
+				var planeDistance = (intersect - position).magnitude;
+				if (marbleRadius - 0.005f - planeDistance > 0.0001f)
+				{
+					position += contact.normal * (marbleRadius - 0.005f - planeDistance);
+					resolved += 1;
+				}
+			}
+			if (resolved == 0 && prevResolved == 0)
+				break;
+			prevResolved = resolved;
+			it++;
+		} while (it < 10);
+		return position;
+	}
+
+	void TestMove(ref Vector3 position, Vector3 velocity, ref float dt)
+	{
+		if (velocity.magnitude > 0.001)
+		{
+			if (Physics.SphereCast(position, marbleRadius, velocity.normalized, out var _hit, velocity.magnitude * dt + marbleRadius))
+			{
+				float _travelTime = _hit.distance / velocity.magnitude;
+				dt = Mathf.Max(Mathf.Min(dt, _travelTime), 0.00001f);
+			}
+		}
+		position += velocity * dt;
+	}
 
 	bool ComputeMoveForces(Vector3 _angVelocity, out Vector3 _torque, out Vector3 _targetAngVel)
 	{
@@ -633,225 +580,245 @@ public class Movement : MonoBehaviour
 		return _force;
 	}
 
-	void VelocityCancel(
-	List<CollisionInfo> _contacts,
-	ref Vector3 _velocity,   // RELATIVE velocity
-	ref Vector3 _omega,
-	bool _surfaceSlide,
-	bool _noBounce)
+	bool VelocityCancel(
+		List<CollisionInfo> _contacts,
+		bool _surfaceSlide,
+		bool _noBounce,
+		ref bool stoppedPaths)
 	{
-		bool firstPass = true;
-		Vector3 up = -GravitySystem.Gravity.normalized;
-
-		for (int iter = 0; iter < 6; iter++)
+		var SurfaceDotThreshold = 0.0001;
+		var looped = false;
+		var itersIn = 0;
+		var done = false;
+		do
 		{
-			bool anyChange = false;
-
-			foreach (var c in _contacts)
+			done = true;
+			itersIn++;
+			for (var i = 0; i < _contacts.Count; i++)
 			{
-				Vector3 n = c.normal;
+				var sVel = marbleVelocity - _contacts[i].velocity;
+				var surfaceDot = Vector3.Dot(_contacts[i].normal, sVel);
 
-				// Relative normal velocity
-				float normalRelVel = Vector3.Dot(_velocity, n);
-
-				// World normal velocity (important for MPs)
-				float worldNormalVel = Vector3.Dot(_velocity + c.velocity, n);
-
-				// --- DECIDE IF THIS CONTACT SHOULD BOUNCE ---
-				bool shouldBounce =
-					!_noBounce &&
-					(
-						normalRelVel < -minBounceVel ||   // real impact
-						Mathf.Abs(worldNormalVel) > 3.0f  // MP-relative impact
-					);
-
-				// --- RESTING GROUND LOCK (ONLY IF NOT BOUNCING) ---
-				if (!shouldBounce &&
-					Vector3.Dot(n, up) > 0.7f &&
-					normalRelVel < 0f)
+				if ((!looped && surfaceDot < 0.0) || surfaceDot < -SurfaceDotThreshold)
 				{
-					// cancel tiny downward velocity
-					_velocity -= n * normalRelVel;
-					anyChange = true;
-					continue;
-				}
+					var velLen = marbleVelocity.magnitude;
+					var surfaceVel = _contacts[i].normal * surfaceDot;
 
-				// --- BOUNCE ---
-				if (shouldBounce && normalRelVel < 0f)
-				{
-					float restitution = bounceRestitution * c.restitution;
-					float bounceImpulse = -(1f + restitution) * normalRelVel;
-
-					_velocity += n * bounceImpulse;
-					anyChange = true;
-
-					// --- Angular impulse from tangential velocity ---
-					Vector3 velAtContact =
-						_velocity + Vector3.Cross(_omega, -n * marbleRadius);
-
-					Vector3 tangentVel =
-						velAtContact - n * Vector3.Dot(velAtContact, n);
-
-					float tangentMag = tangentVel.magnitude;
-
-					if (tangentMag > 0.001f)
+					if (_noBounce)
 					{
-						float penetrationSpeed = -normalRelVel;
-
-						float inertia =
-							(5f * bounceKineticFriction * c.friction * penetrationSpeed) /
-							(2f * marbleRadius);
-
-						inertia = Mathf.Min(inertia, tangentMag / marbleRadius);
-
-						Vector3 tangentDir = tangentVel / tangentMag;
-						Vector3 angularImpulse =
-							inertia * Vector3.Cross(-n, -tangentDir);
-
-						_omega += angularImpulse;
-						_velocity -= Vector3.Cross(-angularImpulse, -n * marbleRadius);
+						marbleVelocity -= surfaceVel;
 					}
+					else
+					{
+						if (_contacts[i].velocity.magnitude < 0.0001f && !_surfaceSlide && surfaceDot > -maxDotSlide * velLen)
+						{
+							marbleVelocity -= surfaceVel;
+							marbleVelocity.Normalize();
+							marbleVelocity *= velLen;
+							_surfaceSlide = true;
+						}
+						else if (surfaceDot >= -minBounceVel)
+						{
+							marbleVelocity -= surfaceVel;
+						}
+						else
+						{
+							var restitution = bounceRestitution;
+							restitution *= _contacts[i].restitution;
+
+							var velocityAdd = surfaceVel * -(1 + restitution);
+							var vAtC = sVel + Vector3.Cross(marbleAngularVelocity, _contacts[i].normal * -marbleRadius);
+							var normalVel = -Vector3.Dot(_contacts[i].normal, sVel);
+
+							// bounceEmitter(sVel.length() * restitution, contacts[i].normal);
+
+							vAtC -= _contacts[i].normal * Vector3.Dot(_contacts[i].normal, sVel);
+
+							var vAtCMag = vAtC.magnitude;
+							if (vAtCMag > 0.00001)
+							{
+								var friction = bounceKineticFriction * _contacts[i].friction;
+
+								var angVMagnitude = 5 * friction * normalVel / (2 * marbleRadius);
+								if (vAtCMag / marbleRadius < angVMagnitude)
+									angVMagnitude = vAtCMag / marbleRadius;
+
+								var vAtCDir = vAtC * (1 / vAtCMag);
+
+								var deltaOmega = Vector3.Cross(_contacts[i].normal, vAtCDir) * angVMagnitude;
+								marbleAngularVelocity += deltaOmega;
+
+								marbleVelocity -= Vector3.Cross(deltaOmega, _contacts[i].normal * marbleRadius);
+							}
+							marbleVelocity += velocityAdd;
+						}
+					}
+
+					done = false;
 				}
 			}
+			looped = true;
+			if (itersIn > 6 && !stoppedPaths)
+			{
+				stoppedPaths = true;
+				if (_noBounce)
+					done = true;
 
-			if (!anyChange && !firstPass)
-				break;
-
-			firstPass = false;
+				foreach (var contact in _contacts)
+					contact.velocity = Vector3.zero;
+			}
+		} while (!done && itersIn < 1e4); // Maximum limit pls
+		if (marbleVelocity.magnitude < 625.0)
+		{
+			var gotOne = false;
+			var dir = Vector3.zero;
+			for (var j = 0; j < _contacts.Count; j++)
+			{
+				var dir2 = dir + _contacts[j].normal;
+				if (dir2.sqrMagnitude < 0.01)
+				{
+					dir2 = dir2 + _contacts[j].normal;
+				}
+				dir = dir2;
+				dir.Normalize();
+				gotOne = true;
+			}
+			if (gotOne)
+			{
+				dir.Normalize();
+				var soFar = 0.0;
+				for (var k = 0; k < _contacts.Count; k++)
+				{
+					var dist = marbleRadius - _contacts[k].contactDistance;
+					var timeToSeparate = 0.1;
+					var vel = marbleVelocity - _contacts[k].velocity;
+					var outVel = Vector3.Dot(vel + dir * (float)soFar, _contacts[k].normal);
+					if (dist > timeToSeparate * outVel)
+					{
+						soFar += (dist - outVel * timeToSeparate) / timeToSeparate / Vector3.Dot(_contacts[k].normal, dir);
+					}
+				}
+				if (soFar < -25.0)
+					soFar = -25.0;
+				if (soFar > 25.0)
+					soFar = 25.0;
+				marbleVelocity += dir * (float)soFar;
+			}
 		}
+
+		return stoppedPaths;
 	}
-
-
 
 	void ApplyContactForces(
 		float _dt,
-		List<CollisionInfo> _contacts,
+		List<CollisionInfo> contacts,
 		bool _isCentered,
 		Vector3 _aControl,
 		Vector3 _desiredOmega,
-		ref Vector3 _velocity,
-		ref Vector3 _omega,
-		ref Vector3 _linAccel,
-		out Vector3 _angAccel)
+		ref Vector3 A,
+		out Vector3 a)
 	{
-		_angAccel = Vector3.zero;
-		slipAmount = 0.0f;
-		Vector3 _vector31 = GravitySystem.Gravity.normalized;
-		int _index1 = -1;
-		float _num1 = 0.0f;
-
-		// Pick strongest contact
-		for (int i = 0; i < _contacts.Count; ++i)
+		a = Vector3.zero;
+		Vector3 gWorkGravityDir = GravitySystem.Gravity.normalized;
+		int bestSurface = -1;
+		float bestNormalForce = 0f;
+		for (int i = 0; i < contacts.Count; i++)
 		{
-			float _num2 = -Vector3.Dot(_contacts[i].normal, _linAccel);
-			if (_num2 > _num1)
+			float normalForce = -Vector3.Dot(contacts[i].normal, A);
+			if (normalForce > bestNormalForce)
 			{
-				_num1 = _num2;
-				_index1 = i;
+				bestNormalForce = normalForce;
+				bestSurface = i;
 			}
 		}
 
-		// Jump impulse isolated
-        if (_index1 != -1 && Jump && bounce <= 0)
-        {
-            CollisionInfo c = _contacts[_index1];
-
-            Vector3 n = c.normal.normalized;
-
-            // Only allow jumping on mostly ground-like surfaces
-            float upDot = Vector3.Dot(n, -GravitySystem.Gravity.normalized);
-            if (upDot > 0.5f)
-            {
-                // Remove platform velocity along the contact normal
-                float platformNormalVel = Vector3.Dot(surfaceVelocity, n);
-                _velocity -= n * platformNormalVel;
-
-                // Remove any existing velocity along the normal
-                float vN = Vector3.Dot(_velocity, n);
-                _velocity -= n * vN;
-
-                // Apply jump impulse strictly along the normal
-                _velocity += n * jumpImpulse;
-
-                GameManager.instance.PlayJumpAudio();
-
-                // Skip friction resolution this frame
-                return;
-            }
-        }
-
-        // Bounce impulse (optional)
-        if (_index1 != -1 && bounce > 0)
+		CollisionInfo bestContact = (bestSurface != -1) ? contacts[bestSurface] : default(CollisionInfo);
+		bool _canJump = bestSurface != -1;
+		if (_canJump && Jump && canJump)
 		{
-			CollisionInfo _collisionInfo = _contacts[_index1];
-			Vector3 _direction = _collisionInfo.normal.normalized;
-			float _directionalSpeed = Vector3.Dot(_velocity, _direction);
-
-			if (_directionalSpeed < bounce)
+			Vector3 velDifference = marbleVelocity - bestContact.velocity;
+			float sv = Vector3.Dot(bestContact.normal, velDifference);
+			if (sv < 0f)
 			{
-				_velocity -= _direction * _directionalSpeed;
-				_velocity += _direction * bounce;
+				sv = 0f;
+			}
+			if (sv < jumpImpulse)
+			{
+				marbleVelocity += bestContact.normal * (jumpImpulse - sv);
+				GameManager.instance.PlayJumpAudio();
 			}
 		}
-
-		// Friction resolution
-		if (_index1 != -1)
+		for (int j = 0; j < contacts.Count; j++)
 		{
-			CollisionInfo _collisionInfo = _contacts[_index1];
-
-			// --- RELATIVE contact velocity (NO platform velocity here) ---
-			Vector3 contactVel =
-				_velocity + Vector3.Cross(_omega, -_collisionInfo.normal * marbleRadius);
-
-			// --- Tangential motion ONLY ---
-			Vector3 tangent = Vector3.ProjectOnPlane(contactVel, _collisionInfo.normal);
-			float tangentSpeed = tangent.magnitude;
-
-			if (tangentSpeed > 0.0001f)
+			float normalForce2 = -Vector3.Dot(contacts[j].normal, A);
+			if (normalForce2 > 0f && Vector3.Dot(contacts[j].normal, marbleVelocity - contacts[j].velocity) <= 0.0001f)
 			{
-				Vector3 dir = tangent / tangentSpeed;
-
-				float _kinetic = kineticFriction * _collisionInfo.friction;
-				float _forceMag = _num1 * _kinetic;
-
-				Vector3 force = -_forceMag * dir;
-				_linAccel += force;
-
-				float _torqueMag = (5.0f * _kinetic * _num1) / (2.0f * marbleRadius);
-				Vector3 torque =
-					_torqueMag * Vector3.Cross(-_collisionInfo.normal, -dir);
-
-				_angAccel += torque;
+				A += contacts[j].normal * normalForce2;
 			}
-
-			// Static friction clamp
-			Vector3 _gravVec = -_vector31 * marbleRadius;
-			Vector3 _gravTorque = Vector3.Cross(_gravVec, _linAccel) / _gravVec.sqrMagnitude;
-
-			if (_isCentered)
-			{
-				Vector3 _omegaNext = _omega + _angAccel * _dt;
-				_aControl = _desiredOmega - _omegaNext;
-				float _mag = _aControl.magnitude;
-				if (_mag > brakingAcceleration)
-					_aControl *= brakingAcceleration / _mag;
-			}
-
-			Vector3 _controlForce = -Vector3.Cross(_aControl, -_collisionInfo.normal * marbleRadius);
-			Vector3 _totalForce = Vector3.Cross(_gravTorque, -_collisionInfo.normal * marbleRadius) + _controlForce;
-
-			float staticLimit = staticFriction * _collisionInfo.friction * _num1;
-			if (_totalForce.magnitude > staticLimit)
-			{
-				float _kinetic = kineticFriction * _collisionInfo.friction;
-				_controlForce *= _kinetic * _num1 / _totalForce.magnitude;
-			}
-
-			_linAccel += _controlForce;
-			_angAccel += _gravTorque;
 		}
+		if (bestSurface != -1)
+		{
+			Vector3 vAtC = marbleVelocity + (Vector3.Cross(marbleAngularVelocity, -bestContact.normal * marbleRadius)) - bestContact.velocity;
+			float vAtCMag = vAtC.magnitude;
+			bool slipping = false;
+			Vector3 aFriction = Vector3.zero;
+			Vector3 AFriction = new Vector3(0f, 0f, 0f);
+			if (vAtCMag != 0f)
+			{
+				slipping = true;
+				float friction = 0.0f;
+				// if (this.mode != MarbleMode.Start)
+				friction = kineticFriction * bestContact.friction;
+				float angAMagnitude = 5 * friction * bestNormalForce / (2 * marbleRadius); // https://math.stackexchange.com/questions/565333/moment-of-inertia-of-a-n-dimensional-sphere
+				float AMagnitude = bestNormalForce * friction;
+				float totalDeltaV = (angAMagnitude * marbleRadius + AMagnitude) * _dt;
+				if (totalDeltaV > vAtCMag)
+				{
+					float fraction = vAtCMag / totalDeltaV;
+					angAMagnitude *= fraction;
+					AMagnitude *= fraction;
+					slipping = false;
+				}
+				Vector3 vAtCDir = vAtC / vAtCMag;
 
-		_angAccel += _aControl;
+				aFriction = Vector3.Cross(-bestContact.normal, -vAtCDir) * angAMagnitude;
+				AFriction = -AMagnitude * vAtCDir;
+			}
+			if (!slipping)
+			{
+				Vector3 R = -gWorkGravityDir * marbleRadius;
+				Vector3 aadd = Vector3.Cross(R, A) / R.sqrMagnitude;
+				if (_isCentered)
+				{
+					Vector3 nextOmega = marbleAngularVelocity + a * _dt;
+					_aControl = _desiredOmega - nextOmega;
+					float aScalar = _aControl.magnitude;
+					if (aScalar > brakingAcceleration)
+					{
+						_aControl *= brakingAcceleration / aScalar;
+					}
+				}
+				Vector3 Aadd = -Vector3.Cross(_aControl, (-bestContact.normal * marbleRadius));
+
+				float aAtCMag = (Vector3.Cross(aadd, (-bestContact.normal * marbleRadius)) + Aadd).magnitude;
+				var friction2 = 0.0f;
+				// if (mode != MarbleMode.Start)
+				friction2 = staticFriction * bestContact.friction;
+				if (aAtCMag > friction2 * bestNormalForce)
+				{
+					friction2 = 0.0f;
+					// if (mode != MarbleMode.Start)
+					friction2 = this.kineticFriction * bestContact.friction;
+					Aadd *= friction2 * bestNormalForce / aAtCMag;
+				}
+				A += Aadd;
+				a += aadd;
+
+			}
+			A += AFriction;
+			a += aFriction;
+		}
+		a += _aControl;
 	}
 
 
@@ -989,6 +956,91 @@ public class Movement : MonoBehaviour
 			c1 = p1 + vector31 * s;
 			c2 = p2 + vector32 * T;
 			return Vector3.Dot(c1 - c2, c1 - c2);
+		}
+
+		public static void ClosestPtPointTriangle(Vector3 p, Vector3 a, Vector3 b, Vector3 c, out Vector3 outP)
+		{
+			// Check if P in vertex region outside A
+			var ab = b - a;
+			var ac = c - a;
+			var ap = p - a;
+			var d1 = Vector3.Dot(ab, ap);
+			var d2 = Vector3.Dot(ac, ap);
+			if (d1 <= 0.0 && d2 <= 0.0)
+			{ // barycentric coordinates (1,0,0)
+				outP = a;
+				return;
+			}
+			// Check if P in vertex region outside B
+			var bp = p - b;
+			var d3 = Vector3.Dot(ab, bp);
+			var d4 = Vector3.Dot(ac, bp);
+			if (d3 >= 0.0 && d4 <= d3)
+			{ // barycentric coordinates (0,1,0
+				outP = b;
+				return;
+			}
+
+			// Check if P in edge region of AB, if so return projection of P onto AB
+			var vc = d1 * d4 - d3 * d2;
+			if (vc <= 0.0 && d1 >= 0.0 && d3 <= 0.0)
+			{
+				var v2 = d1 / (d1 - d3);
+				outP = a + ab * v2;
+				return;
+			}
+
+			// Check if P in vertex region outside C
+			var cp = p - c;
+			var d5 = Vector3.Dot(ab, cp);
+			var d6 = Vector3.Dot(ac, cp);
+			if (d6 >= 0.0 && d5 <= d6)
+			{ // barycentric coordinates (0,0,1)
+				outP = c;
+				return;
+			}
+
+			// Check if P in edge region of AC, if so return projection of P onto AC
+			var vb = d5 * d2 - d1 * d6;
+			if (vb <= 0.0 && d2 >= 0.0 && d6 <= 0.0)
+			{
+				var w2 = d2 / (d2 - d6);
+				outP = a + ac * w2;
+				return;
+			}
+
+			// Check if P in edge region of BC, if so return projection of P onto BC
+			var va = d3 * d6 - d5 * d4;
+			if (va <= 0.0 && (d4 - d3) >= 0.0 && (d5 - d6) >= 0.0)
+			{
+				var w3 = (d4 - d3) / ((d4 - d3) + (d5 - d6));
+				outP = b + (c - b) * w3;
+				return;
+			}
+			// P inside face region. Compute Q through its barycentric coordinates (u,v,w)
+
+			var denom = 1.0f / (va + vb + vc);
+			var v = vb * denom;
+			var w = vc * denom;
+			outP = a + ab * v + ac * w;
+			return;
+		}
+
+		public static bool TriangleSphereIntersection(Vector3 v0, Vector3 v1, Vector3 v2, Vector3 N, Vector3 P, float r, out Vector3 point, out Vector3 normal)
+		{
+			ClosestPtPointTriangle(P, v0, v1, v2, out point);
+			var v = point - P;
+			if (v.sqrMagnitude <= r * r)
+			{
+				normal = P - point;
+				normal.Normalize();
+				return true;
+			}
+			else
+			{
+				normal = Vector3.zero;
+				return false;
+			}
 		}
 	}
 }
