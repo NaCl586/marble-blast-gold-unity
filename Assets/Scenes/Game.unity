@@ -846,6 +846,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   frictions:
   - {fileID: 11400000, guid: 2678da6db8ac07a41a6fc8d8664afe8c, type: 2}
+  - {fileID: 11400000, guid: 7c376d57190d77b4aa7fe04f605d9082, type: 2}
+  - {fileID: 11400000, guid: 4bd3b3fc5198f77488609f2ab68403f3, type: 2}
+  - {fileID: 11400000, guid: 45bde35a947462b4da02b0c156eaaa38, type: 2}
+  - {fileID: 11400000, guid: 700211cb0a28a974ca9f12cf673ac75b, type: 2}
+  - {fileID: 11400000, guid: 668cb370579c0e249b73370cced16658, type: 2}
   defaultPhysicMaterial: {fileID: 13400000, guid: 9f602b3fd3a59419e8822de779a930ea,
     type: 2}
   m_restitution: 0
@@ -1394,7 +1399,7 @@ PrefabInstance:
     - target: {fileID: 5550206444172770267, guid: 268ee7a989320e547b2b4f2c644a2f69,
         type: 3}
       propertyPath: m_VersionIndex
-      value: 3117
+      value: 3120
       objectReference: {fileID: 0}
     - target: {fileID: 5550206444172770271, guid: 268ee7a989320e547b2b4f2c644a2f69,
         type: 3}
@@ -1539,7 +1544,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bec63c7e30a457f8c34d990a8eafdff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MissionPath: marble/data/missions/advanced/slipslide.mis
+  MissionPath: marble/data/missions/advanced/kingofthemountain.mis
   MissionObjects:
   - {fileID: 1650841305}
   interiorPrefab: {fileID: 6653497135140199419, guid: 3806fd2cf50ec474f88647ee66b42828,
@@ -3806,6 +3811,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Gyro_Blades
+      objectReference: {fileID: 0}
+    - target: {fileID: 5234450639919567428, guid: 7d27e98cd7e40d544af8114ceb112076,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

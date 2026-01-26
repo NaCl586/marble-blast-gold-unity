@@ -822,15 +822,10 @@ public class Movement : MonoBehaviour
 		bool _canJump = bestSurface != -1;
 		if (_canJump && Jump && canJump)
 		{
-			Vector3 up = Vector3.up; // or -Gravity.normalized if you use custom gravity
-
-			// How "floor-like" the surface must be
-			const float MIN_UP_DOT = 0.7f; // tweak (0.5 = ~60°, 0.7 = steeper floor only)
-
-			float upDot = Vector3.Dot(bestContact.normal.normalized, up);
+			float upDot = Vector3.Dot(bestContact.normal.normalized, -GravitySystem.GravityDir.normalized);
 
 			// Wall or ceiling → no jump
-			if (upDot >= MIN_UP_DOT)
+			if (upDot >= 0.1f)
             {
 				Vector3 velDifference = marbleVelocity - bestContact.velocity;
 				float sv = Vector3.Dot(bestContact.normal, velDifference);

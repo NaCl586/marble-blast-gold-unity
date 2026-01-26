@@ -58,7 +58,7 @@ public class Marble : MonoBehaviour
                 GameManager.instance.RestartLevel();
         }
 
-        if (Input.GetKeyDown(KeyCode.Mouse0) && !GameManager.gameFinish)
+        if (Input.GetKeyDown(KeyCode.Mouse0) && !GameManager.isPaused && !GameManager.gameFinish)
             UsePowerup();
     }
 
