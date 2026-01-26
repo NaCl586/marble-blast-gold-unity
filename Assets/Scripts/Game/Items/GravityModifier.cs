@@ -110,8 +110,6 @@ public class GravityModifier : Powerups
         }
     }
 
-
-
     private void ResetGravity()
     {
         GravitySystem.GravityDir = Vector3.down;

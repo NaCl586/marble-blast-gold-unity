@@ -126,6 +126,13 @@ public class CheckCollision : MonoBehaviour
         if (collisions.Count == 0) ClearCollisionState();
     }
 
+    private void OnTriggerStay(Collider other)
+    {
+        Powerups p;
+        if (other.TryGetComponent<Powerups>(out p))
+            p.PickupItem();
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         Gem g;
@@ -168,6 +175,10 @@ public class CheckCollision : MonoBehaviour
 
         string detectedTextureName = string.Empty;
         movement.collidedTexture = ResolveTexture(hit, out detectedTextureName);
+
+        const string instanceSuffix = " (Instance)";
+        if (detectedTextureName.EndsWith(instanceSuffix))
+            detectedTextureName = detectedTextureName.Substring(0, detectedTextureName.Length - instanceSuffix.Length);
 
         FrictionSO frictionSO = FrictionManager.instance.SearchFriction(detectedTextureName);
 

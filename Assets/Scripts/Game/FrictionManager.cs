@@ -14,7 +14,7 @@ public class FrictionManager : MonoBehaviour
     // DEFAULT VALUES (MARBLE)
     private float m_staticFriction;
     private float m_kineticFriction;
-    private float m_restitution;
+    [HideInInspector] public float m_restitution;
     private float m_bounce;
 
     // Movement and collision reference
@@ -47,7 +47,6 @@ public class FrictionManager : MonoBehaviour
         movement.staticFriction = m_staticFriction;
         movement.kineticFriction = m_kineticFriction;
         movement.bounceRestitution = m_restitution;
-        movement.bounce = m_bounce;
 
         defaultPhysicMaterial.staticFriction = 1;
         defaultPhysicMaterial.dynamicFriction = 1;
@@ -80,8 +79,7 @@ public class FrictionManager : MonoBehaviour
         if (frictionSO.bounce != -1)
         {
             movement.bounce = frictionSO.bounce;
-        }
-            
+        } 
     }
 
     public FrictionSO SearchFriction(string _name)

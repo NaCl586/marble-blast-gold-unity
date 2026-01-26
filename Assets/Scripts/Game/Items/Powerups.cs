@@ -38,15 +38,17 @@ public class Powerups : MonoBehaviour
     private float timeDeactivated;
     protected string bottomTextMsg = string.Empty;
 
+    [HideInInspector] public bool rotateMesh = true;
+
     // Start is called before the first frame update
     void Start()
     {
         isActive = true;
     }
 
-    private void OnTriggerStay(Collider other)
+    public void PickupItem()
     {
-        if (other.CompareTag("Marble") && isActive)
+        if (isActive)
         {
             Deactivate();
 
@@ -56,16 +58,24 @@ public class Powerups : MonoBehaviour
             }
             else
             {
-                /*GameManager.instance.activePowerup = powerupType;
-                UIManager.instance.SetPowerupIcon(powerupType);*/
+                GameManager.instance.activePowerup = powerupType;
+                GameUIManager.instance.SetPowerupIcon(powerupType);
             }
         }
     }
 
     private void FixedUpdate()
     {
-        var rot = transform.Find("Mesh").rotation;
-        transform.Find("Mesh").rotation = Quaternion.AngleAxis(Time.fixedDeltaTime * 120f, rot * Vector3.up) * rot;
+        
+        if (rotateMesh)
+        {
+            var rot = transform.Find("Mesh").rotation;
+            transform.Find("Mesh").rotation = Quaternion.AngleAxis(Time.fixedDeltaTime * 120f, rot * Vector3.up) * rot;
+        }
+        else
+        {
+            transform.rotation = Quaternion.AngleAxis(Time.fixedDeltaTime * 120f, transform.rotation * Vector3.up) * transform.rotation;
+        }
 
         if (Time.time - timeDeactivated >= respawnTime && !this.isActive)
             Activate(true);
@@ -102,11 +112,11 @@ public class Powerups : MonoBehaviour
         timeDeactivated = Time.time;
         isActive = false;
 
-        //GameManager.instance.PlayAudioClip(pickupSound);
+        GameManager.instance.PlayAudioClip(pickupSound);
         if (powerupType != PowerupType.TimeTravel)
             bottomTextMsg = "You picked up a " + powerupName;
 
-        //UIManager.instance.SetBottomText(bottomTextMsg);
+        GameUIManager.instance.SetBottomText(bottomTextMsg);
 
         foreach (Transform child in transform)
             child.gameObject.SetActive(false);

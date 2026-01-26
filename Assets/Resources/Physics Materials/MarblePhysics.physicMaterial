@@ -9,6 +9,6 @@ PhysicMaterial:
   m_Name: MarblePhysics
   dynamicFriction: 0.7
   staticFriction: 1.1
-  bounciness: 0
+  bounciness: 1
   frictionCombine: 2
   bounceCombine: 1

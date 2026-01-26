@@ -159,7 +159,7 @@ public class GameManager : MonoBehaviour
             GameUIManager.instance.ShowGemCountUI(false);
     }
 
-    #region Game
+#region Game
     public PowerupType ConsumePowerup()
     {
         PowerupType powerup = activePowerup;
@@ -301,11 +301,11 @@ public class GameManager : MonoBehaviour
             Movement.instance.StartMoving();
         }
 
-        /*Marble.instance.RevertMaterial();
+        Marble.instance.RevertMaterial();
         Marble.instance.ToggleGyrocopterBlades(false);
         if (gyrocopterIsActive)
             Marble.instance.CancelGyrocopter();
-        Marble.instance.InactivateTimeTravel();*/
+        Marble.instance.InactivateTimeTravel();
     }
 
 

@@ -21,10 +21,10 @@ public class Movement : MonoBehaviour
 	public void Awake() => instance = this;
 
 	//constraint
-	[HideInInspector] public bool canSpin = true;
-	[HideInInspector] public bool canMove = true;
-	[HideInInspector] public bool canJump = true;
-	[HideInInspector] public bool freezeMovement = false;
+	public bool canSpin = true;
+	public bool canMove = true;
+	public bool canJump = true;
+	public bool freezeMovement = false;
 	[Space]
 	public float maxRollVelocity = 15f;
 	public float angularAcceleration = 75f;
@@ -63,7 +63,7 @@ public class Movement : MonoBehaviour
 
 	private Vector3 surfaceVelocity;
 
-	[SerializeField] private List<MeshCollider> colTests;
+	private List<MeshCollider> colTests;
 
 	class MeshData
 	{
@@ -102,6 +102,7 @@ public class Movement : MonoBehaviour
 
 	private bool hasPosition = false;
 
+	[System.Serializable]
 	class CollisionInfo
 	{
 		public Vector3 point;
@@ -309,13 +310,13 @@ public class Movement : MonoBehaviour
 
 				var closest = Vector3.zero;
 				var contactNormal = Vector3.zero;
-				var res = CollisionHelpers.TriangleSphereIntersection(_p0, _p1, _p2, _normal, position, marbleRadius, out closest, out contactNormal);
+				var res = CollisionHelpers.TriangleSphereIntersection(_p0, _p1, _p2, _normal, position, _radius, out closest, out contactNormal);
 				// var closest = Collision.ClosestPtPointTriangle(position, radius, v0, v, v2, surfacenormal);
 				if (res)
 				{
 					var contactDist = (closest - position).sqrMagnitude;
 					// Debug.drawTriangle(v0, v, v2);
-					if (contactDist <= marbleRadius * marbleRadius)
+					if (contactDist <= _radius * _radius)
 					{
 						if (Vector3.Dot(position - closest, _normal) > 0)
 						{
@@ -351,12 +352,14 @@ public class Movement : MonoBehaviour
 		return contacts;
 	}
 
+    [SerializeField] private List<CollisionInfo> contacts = new List<CollisionInfo>();
+
 	private void AdvancePhysics(ref float _dt)
 	{
 		var searchBox = sphereCollider.bounds;
 		searchBox.Expand(0.1f);
 
-		var contacts = FindContacts(searchBox);
+		contacts = FindContacts(searchBox);
 
 		UpdateMove(ref _dt, contacts);
 	}
@@ -436,14 +439,42 @@ public class Movement : MonoBehaviour
 			out Vector3 a);
 
 		// Integrate forces
-		marbleVelocity += A * _dt;
-		marbleAngularVelocity += a * _dt;
+		if (canMove)
+		{
+			marbleVelocity += A * _dt;
+			marbleAngularVelocity += a * _dt;
+		}
+		else
+		{
+			// Allow vertical physics only
+			marbleVelocity.y += A.y * _dt;
+			marbleAngularVelocity += a * _dt;
+
+			// Clamp stored horizontal velocity
+			Vector3 horiz = new Vector3(marbleVelocity.x, 0f, marbleVelocity.z);
+			float maxStored = 1.5f; // tweak this
+
+			if (horiz.magnitude > maxStored)
+			{
+				horiz = horiz.normalized * maxStored;
+				marbleVelocity.x = horiz.x;
+				marbleVelocity.z = horiz.z;
+			}
+		}
 
 		// Second pass: cancel velocity with bounce disabled
 		VelocityCancel(_contacts, !isMoving, true, ref stoppedPaths);
 
+		Vector3 moveVel = marbleVelocity;
+
+		if (!canMove)
+		{
+			moveVel.x = 0f;
+			moveVel.z = 0f;
+		}
+
 		var testDt = _dt;
-		TestMove(ref position, marbleVelocity, ref testDt);
+		TestMove(ref position, moveVel, ref testDt);
 
 		if (testDt != _dt)
 		{
@@ -456,6 +487,13 @@ public class Movement : MonoBehaviour
 		var expectedPos = position;
 
 		var newPos = NudgeToContacts(marbleVelocity, expectedPos, _contacts);
+
+		if (!canMove)
+		{
+			newPos.x = lockedXZ.x;
+			newPos.z = lockedXZ.y;
+		}
+
 		if (marbleVelocity.sqrMagnitude > 1e-8f)
 		{
 			var posDiff = newPos - expectedPos;
@@ -477,11 +515,13 @@ public class Movement : MonoBehaviour
 
 		if (!canMove)
 		{
-			marbleVelocity.x = 0f;
-			marbleVelocity.z = 0f;
+			Vector3 lockedPos = new Vector3(
+				lockedXZ.x,
+				position.y,   // allow vertical motion
+				lockedXZ.y
+			);
 
-			newPos.x = lockedXZ.x;
-			newPos.z = lockedXZ.y;
+			position = lockedPos;
 		}
 
 		position = newPos;
@@ -767,6 +807,20 @@ public class Movement : MonoBehaviour
 		}
 
 		CollisionInfo bestContact = (bestSurface != -1) ? contacts[bestSurface] : default(CollisionInfo);
+
+		if (bestSurface != -1 && bounce > 0)
+        {
+			Vector3 n = bestContact.normal.normalized;
+
+			// component of velocity along the normal
+			float normalComponent = Vector3.Dot(marbleVelocity, n);
+
+			// remove it
+			marbleVelocity -= normalComponent * n;
+			marbleVelocity += n * bounce;
+			return;
+        }
+
 		bool _canJump = bestSurface != -1;
 		if (_canJump && Jump && canJump)
 		{
@@ -796,7 +850,7 @@ public class Movement : MonoBehaviour
 			float vAtCMag = vAtC.magnitude;
 			bool slipping = false;
 			Vector3 aFriction = Vector3.zero;
-			Vector3 AFriction = new Vector3(0f, 0f, 0f);
+			Vector3 AFriction = Vector3.zero;
 			if (vAtCMag != 0f)
 			{
 				slipping = true;

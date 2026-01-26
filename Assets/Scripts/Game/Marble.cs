@@ -27,7 +27,7 @@ public class Marble : MonoBehaviour
     public class OnRespawn : UnityEvent { };
     public static OnRespawn onRespawn = new OnRespawn();
 
-    private void Awake()
+    public void Awake()
     {
         // Enforce singleton
         if (instance != null && instance != this)
@@ -38,15 +38,14 @@ public class Marble : MonoBehaviour
 
         instance = this;
 
+        onRespawn.AddListener(Respawn);
+    }
+
+    private void Start()
+    {
         movement = GetComponent<Movement>();
 
-        // Cursor setup
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-
-        startPoint = GameObject.Find("StartPad").transform.Find("Spawn");
-
-        onRespawn.AddListener(Respawn);
+        startPoint = GameManager.instance.startPad.transform.Find("Spawn");
     }
 
     private void Update()
@@ -58,6 +57,29 @@ public class Marble : MonoBehaviour
             else
                 GameManager.instance.RestartLevel();
         }
+
+        if (Input.GetKeyDown(KeyCode.Mouse0) && !GameManager.gameFinish)
+            UsePowerup();
+    }
+
+    public void LateUpdate()
+    {
+        gyrocopterBlades.transform.position = transform.position;
+    }
+
+    void UsePowerup()
+    {
+        PowerupType powerUp = GameManager.instance.ConsumePowerup();
+        if (powerUp == PowerupType.SuperJump)
+            SuperJump.onUseSuperJump?.Invoke();
+        if (powerUp == PowerupType.SuperSpeed)
+            SuperSpeed.onUseSuperSpeed?.Invoke();
+        if (powerUp == PowerupType.ShockAbsorber)
+            ShockAbsorber.onUseShockAbsorber?.Invoke();
+        if (powerUp == PowerupType.SuperBounce)
+            SuperBounce.onUseSuperBounce?.Invoke();
+        if (powerUp == PowerupType.Gyrocopter)
+            Gyrocopter.onUseGyrocopter?.Invoke();
     }
 
     public void Respawn()
@@ -110,20 +132,28 @@ public class Marble : MonoBehaviour
         if (GameManager.instance.superBounceIsActive)
         {
             StopSound(PowerupType.SuperBounce);
-            GameManager.instance.superBounceIsActive = false;
         }
         else if (GameManager.instance.shockAbsorberIsActive)
         {
             StopSound(PowerupType.ShockAbsorber);
-            GameManager.instance.shockAbsorberIsActive = false;
         }
+
+        GameManager.instance.superBounceIsActive = false;
+        GameManager.instance.shockAbsorberIsActive = false;
+
+        if (GameManager.instance.shockAbsorberIsActive)
+            movement.bounceRestitution = 0;
+        else if (GameManager.instance.superBounceIsActive)
+            movement.bounceRestitution = 1;
+        else
+            movement.bounceRestitution = movement.GetComponent<FrictionManager>().m_restitution;
     }
 
     public void UseSuperBounce()
     {
         //cancel shock absorber immediately
         if (GameManager.instance.shockAbsorberIsActive)
-            RevertMaterial();
+            GameManager.instance.shockAbsorberIsActive = false;
 
         ToggleGlowBounce(true);
 
@@ -133,6 +163,7 @@ public class Marble : MonoBehaviour
 
             //marble is changed into super bounce material
             FrictionManager.instance.RevertMaterial();
+            movement.bounceRestitution = 1f;
         }
     }
 
@@ -141,7 +172,7 @@ public class Marble : MonoBehaviour
     {
         //cancel super bounce immediately
         if (GameManager.instance.superBounceIsActive)
-            RevertMaterial();
+            GameManager.instance.superBounceIsActive = false;
 
         ToggleGlowBounce(true);
 
@@ -151,6 +182,7 @@ public class Marble : MonoBehaviour
 
             //marble is changed into super bounce material
             FrictionManager.instance.RevertMaterial();
+            movement.bounceRestitution = 0f;
         }
     }
 
@@ -159,7 +191,7 @@ public class Marble : MonoBehaviour
         ToggleGyrocopterBlades(true);
         GameManager.instance.gyrocopterIsActive = true;
         PlaySound(PowerupType.Gyrocopter);
-        Physics.gravity = Physics.gravity * 0.25f;
+        movement.gravity = movement.gravity * 0.25f;
     }
 
     public void CancelGyrocopter()
@@ -167,7 +199,7 @@ public class Marble : MonoBehaviour
         ToggleGyrocopterBlades(false);
         GameManager.instance.gyrocopterIsActive = false;
         StopSound(PowerupType.Gyrocopter);
-        Physics.gravity = Physics.gravity * 4;
+        movement.gravity = movement.gravity * 4;
     }
 
     public void ActivateTimeTravel(float _timeBonus)
@@ -185,6 +217,6 @@ public class Marble : MonoBehaviour
     {
         GameManager.instance.timeTravelBonus = 0f;
         GameManager.instance.timeTravelActive = false;
-        //StopSound(PowerupType.TimeTravel);
+        StopSound(PowerupType.TimeTravel);
     }
 }
