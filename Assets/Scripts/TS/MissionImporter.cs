@@ -22,6 +22,7 @@ namespace TS
         public GameObject movingPlatformPrefab;
         public GameObject triggerGoToTarget;
         public GameObject inBoundsTrigger;
+        public GameObject helpTriggerInstance;
         [Space]
         public GameObject finishSignPrefab;
         public GameObject gemPrefab;
@@ -35,6 +36,12 @@ namespace TS
         public GameObject timeTravelPrefab;
         [Space]
         public GameObject trapdoorPrefab;
+        public GameObject roundBumperPrefab;
+        public GameObject triangleBumperPrefab;
+        public GameObject ductFanPrefab;
+        public GameObject tornadoPrefab;
+        public GameObject oilSlickPrefab;
+        public GameObject landMinePrefab;
 
         [Header("References")]
         public GameObject globalMarble;
@@ -131,7 +138,7 @@ namespace TS
                 {
                     string objectName = obj.GetField("dataBlock");
                     
-                    if(objectName == "GemItem")
+                    if(objectName.StartsWith("GemItem"))
                     {
                         var gobj = Instantiate(gemPrefab, transform, false);
                         gobj.name = "Gem";
@@ -171,6 +178,13 @@ namespace TS
                         var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")), false);
                         var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
 
+                        string showInfo = obj.GetField("showHelpOnPickup");
+                        if (showInfo != string.Empty)
+                        {
+                            bool showInfotutorial = int.Parse(showInfo) == 1;
+                            gobj.GetComponent<Powerups>().showHelpOnPickup = showInfotutorial;
+                        }
+
                         var localScale = gobj.transform.localScale;
 
                         gobj.transform.localPosition = position;
@@ -187,6 +201,13 @@ namespace TS
                         var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
                         var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")), false);
                         var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        string showInfo = obj.GetField("showHelpOnPickup");
+                        if (showInfo != string.Empty)
+                        {
+                            bool showInfotutorial = int.Parse(showInfo) == 1;
+                            gobj.GetComponent<Powerups>().showHelpOnPickup = showInfotutorial;
+                        }
 
                         var localScale = gobj.transform.localScale;
 
@@ -205,6 +226,13 @@ namespace TS
                         var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")), false);
                         var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
 
+                        string showInfo = obj.GetField("showHelpOnPickup");
+                        if (showInfo != string.Empty)
+                        {
+                            bool showInfotutorial = int.Parse(showInfo) == 1;
+                            gobj.GetComponent<Powerups>().showHelpOnPickup = showInfotutorial;
+                        }
+
                         var localScale = gobj.transform.localScale;
 
                         gobj.transform.localPosition = position;
@@ -221,6 +249,13 @@ namespace TS
                         var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
                         var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")), false);
                         var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        string showInfo = obj.GetField("showHelpOnPickup");
+                        if (showInfo != string.Empty)
+                        {
+                            bool showInfotutorial = int.Parse(showInfo) == 1;
+                            gobj.GetComponent<Powerups>().showHelpOnPickup = showInfotutorial;
+                        }
 
                         var localScale = gobj.transform.localScale;
 
@@ -239,6 +274,13 @@ namespace TS
                         var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")), false);
                         var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
 
+                        string showInfo = obj.GetField("showHelpOnPickup");
+                        if(showInfo != string.Empty)
+                        {
+                            bool showInfotutorial = int.Parse(showInfo) == 1;
+                            gobj.GetComponent<Powerups>().showHelpOnPickup = showInfotutorial;
+                        }
+                        
                         var localScale = gobj.transform.localScale;
 
                         gobj.transform.localPosition = position;
@@ -342,13 +384,115 @@ namespace TS
                                                                 scale.z * gobj.transform.localScale.z
                                                                 );
                     }
+
+                    else if (objectName.ToLower() == "ductfan")
+                    {
+                        var gobj = Instantiate(ductFanPrefab, transform, false);
+                        gobj.name = "DuctFan";
+
+                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        gobj.transform.localPosition = position;
+                        gobj.transform.localRotation = rotation * Quaternion.Euler(90f, 0f, 0f); ;
+                        gobj.transform.localScale = new Vector3(scale.x * gobj.transform.localScale.x,
+                                                                scale.y * gobj.transform.localScale.y,
+                                                                scale.z * gobj.transform.localScale.z
+                                                                );
+                    }
+
+                    else if (objectName.ToLower() == "tornado")
+                    {
+                        var gobj = Instantiate(tornadoPrefab, transform, false);
+                        gobj.name = "Tornado";
+
+                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        gobj.transform.localPosition = position;
+                        gobj.transform.localRotation = rotation * Quaternion.Euler(90f, 0f, 0f); ;
+                        gobj.transform.localScale = new Vector3(scale.x * gobj.transform.localScale.x,
+                                                                scale.y * gobj.transform.localScale.y,
+                                                                scale.z * gobj.transform.localScale.z
+                                                                );
+                    }
+
+                    else if (objectName.ToLower() == "landmine")
+                    {
+                        var gobj = Instantiate(landMinePrefab, transform, false);
+                        gobj.name = "LandMine";
+
+                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        gobj.transform.localPosition = position;
+                        gobj.transform.localRotation = rotation * Quaternion.Euler(90f, 0f, 0f); ;
+                        gobj.transform.localScale = new Vector3(scale.x * gobj.transform.localScale.x,
+                                                                scale.y * gobj.transform.localScale.y,
+                                                                scale.z * gobj.transform.localScale.z
+                                                                );
+                    }
+
+                    else if (objectName.ToLower() == "roundbumper")
+                    {
+                        var gobj = Instantiate(roundBumperPrefab, transform, false);
+                        gobj.name = "RoundBumper";
+
+                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        gobj.transform.localPosition = position;
+                        gobj.transform.localRotation = rotation * Quaternion.Euler(90f, 0f, 0f); ;
+                        gobj.transform.localScale = new Vector3(scale.x * gobj.transform.localScale.x,
+                                                                scale.y * gobj.transform.localScale.y,
+                                                                scale.z * gobj.transform.localScale.z
+                                                                );
+                    }
+
+                    else if (objectName.ToLower() == "trianglebumper")
+                    {
+                        var gobj = Instantiate(roundBumperPrefab, transform, false);
+                        gobj.name = "TriangleBumper";
+
+                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        gobj.transform.localPosition = position;
+                        gobj.transform.localRotation = rotation * Quaternion.Euler(90f, 0f, 0f); ;
+                        gobj.transform.localScale = new Vector3(scale.x * gobj.transform.localScale.x,
+                                                                scale.y * gobj.transform.localScale.y,
+                                                                scale.z * gobj.transform.localScale.z
+                                                                );
+                    }
+
+                    else if (objectName.ToLower() == "oilslick")
+                    {
+                        var gobj = Instantiate(oilSlickPrefab, transform, false);
+                        gobj.name = "OilSlick";
+
+                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        gobj.transform.localPosition = position;
+                        gobj.transform.localRotation = rotation * Quaternion.Euler(90f, 0f, 0f); ;
+                        gobj.transform.localScale = new Vector3(scale.x * gobj.transform.localScale.x,
+                                                                scale.y * gobj.transform.localScale.y,
+                                                                scale.z * gobj.transform.localScale.z
+                                                                );
+                    }
                 }
 
                 else if (obj.ClassName == "Trigger")
                 {
                     string objectName = obj.GetField("dataBlock");
 
-                    if(objectName == "InBoundsTrigger")
+                    if (objectName == "InBoundsTrigger")
                     {
                         var ibtObj = Instantiate(inBoundsTrigger, transform, false);
                         ibtObj.name = "InBoundsTrigger";
@@ -362,6 +506,27 @@ namespace TS
                         ibtObj.transform.localPosition = position;
                         ibtObj.transform.localRotation = rotation;
                         ibtObj.transform.localScale = new Vector3(scale.x * polyhedronScale.z, scale.y * polyhedronScale.x, scale.z * polyhedronScale.y);
+                    }
+
+                    else
+                    {
+                        if (objectName == "HelpTrigger")
+                        {
+                            var htObj = Instantiate(helpTriggerInstance, transform, false);
+                            htObj.name = "HelpTrigger";
+
+                            htObj.GetComponent<HelpTrigger>().helpText = obj.GetField("text");
+
+                            var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                            var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                            var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                            var polyhedronScale = PolyhedronToBoxSize(ParseVectorString(obj.GetField("polyhedron")));
+
+                            htObj.transform.localPosition = position;
+                            htObj.transform.localRotation = rotation;
+                            htObj.transform.localScale = new Vector3(scale.x * polyhedronScale.z, scale.y * polyhedronScale.x, scale.z * polyhedronScale.y);
+                        }
                     }
                 }
 

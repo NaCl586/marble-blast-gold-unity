@@ -9,6 +9,7 @@ public class CheckCollision : MonoBehaviour
     public Vector3 point = Vector3.zero;
     public Collider other;
 
+    [System.Serializable]
     private class CollisionRecord
     {
         public Collider collider;
@@ -16,7 +17,7 @@ public class CheckCollision : MonoBehaviour
         public RaycastHit hit;
     }
 
-    private readonly List<CollisionRecord> collisions = new List<CollisionRecord>();
+    List<CollisionRecord> collisions = new List<CollisionRecord>();
     private Vector3 previousPosition;
     private SphereCollider sphereCollider;
     private Movement movement;
@@ -60,10 +61,10 @@ public class CheckCollision : MonoBehaviour
 
     private void ManualCollisionCheck(Vector3 startPos, Vector3 movement)
     {
-        float radius = sphereCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z);
+        float radius = (sphereCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z)) + 0.05f;
 
         // Ground check
-        Vector3 origin = transform.position - Vector3.up * (radius - 0.01f);
+        Vector3 origin = transform.position - Vector3.up * radius;
         if (Physics.Raycast(origin, Vector3.down, out RaycastHit groundHit, 0.5f) && groundHit.collider != sphereCollider)
             RegisterCollision(groundHit.collider, groundHit);
 
@@ -112,7 +113,19 @@ public class CheckCollision : MonoBehaviour
     }
 
     // Manual Collision Event Methods
-    private void OnManualCollisionEnter(Collider collider, RaycastHit hit) => ApplyCollision(hit);
+    private void OnManualCollisionEnter(Collider collider, RaycastHit hit)
+    {
+        ApplyCollision(hit);
+
+        LandMine lm;
+        if (hit.collider.TryGetComponent<LandMine>(out lm))
+            lm.CollisionEnter();
+
+        Bumper b;
+        if (hit.collider.TryGetComponent<Bumper>(out b))
+            b.CollisionEnter();
+    }
+
     private void OnManualCollisionStay(Collider collider, RaycastHit hit) { 
         ApplyCollision(hit);
 
@@ -145,12 +158,31 @@ public class CheckCollision : MonoBehaviour
         if (other.CompareTag("Finish"))
             GameManager.onFinish?.Invoke();
 
+        Tornado t;
+        if (other.TryGetComponent<Tornado>(out t))
+            t.playerIsColliding = true;
+
+        DuctFan df;
+        if (other.TryGetComponent<DuctFan>(out df))
+            df.playerIsColliding = true;
+
+        HelpTrigger ht;
+        if (other.TryGetComponent<HelpTrigger>(out ht))
+            ht.TriggerEnter();
     }
 
     private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("InBounds"))
             GameManager.onOutOfBounds?.Invoke();
+
+        Tornado t;
+        if (other.TryGetComponent<Tornado>(out t))
+            t.playerIsColliding = false;
+
+        DuctFan df;
+        if (other.TryGetComponent<DuctFan>(out df))
+            df.playerIsColliding = false;
     }
 
     private void ClearCollisionState()

@@ -64,6 +64,7 @@ public class Movement : MonoBehaviour
 	private Vector3 surfaceVelocity;
 
 	private List<MeshCollider> colTests;
+	private List<CollisionInfo> contacts = new List<CollisionInfo>();
 
 	class MeshData
 	{
@@ -93,7 +94,6 @@ public class Movement : MonoBehaviour
 	Vector3 oldPos;
 	Vector3 newPos;
 	Quaternion prevRot;
-	float fixedDeltaTimeAccumulator = 0.0f;
 
 	private bool wasCanMove = true;
 	private Vector2 lockedXZ;
@@ -166,9 +166,6 @@ public class Movement : MonoBehaviour
 
 		GravitySystem.GravityStrength = gravity;
 
-		meshes = new List<MeshData>();
-		colTests = new List<MeshCollider>();
-
 		marbleRadius = sphereCollider.radius * Mathf.Max(
 			transform.lossyScale.x,
 			transform.lossyScale.y,
@@ -178,6 +175,9 @@ public class Movement : MonoBehaviour
 
 	public void GenerateMeshData()
 	{
+		colTests = new List<MeshCollider>();
+		meshes = new List<MeshData>();
+
 		foreach (var item in FindObjectsOfType<MeshCollider>())
 			if(!item.isTrigger)
 				colTests.Add(item);
@@ -351,8 +351,6 @@ public class Movement : MonoBehaviour
 
 		return contacts;
 	}
-
-    [SerializeField] private List<CollisionInfo> contacts = new List<CollisionInfo>();
 
 	private void AdvancePhysics(ref float _dt)
 	{
@@ -808,9 +806,9 @@ public class Movement : MonoBehaviour
 
 		CollisionInfo bestContact = (bestSurface != -1) ? contacts[bestSurface] : default(CollisionInfo);
 
-		if (bestSurface != -1 && bounce > 0)
+		if (contacts.Count > 0 && bounce > 0)
         {
-			Vector3 n = bestContact.normal.normalized;
+			Vector3 n = contacts[contacts.Count - 1].normal.normalized;
 
 			// component of velocity along the normal
 			float normalComponent = Vector3.Dot(marbleVelocity, n);
@@ -824,16 +822,27 @@ public class Movement : MonoBehaviour
 		bool _canJump = bestSurface != -1;
 		if (_canJump && Jump && canJump)
 		{
-			Vector3 velDifference = marbleVelocity - bestContact.velocity;
-			float sv = Vector3.Dot(bestContact.normal, velDifference);
-			if (sv < 0f)
-			{
-				sv = 0f;
-			}
-			if (sv < jumpImpulse)
-			{
-				marbleVelocity += bestContact.normal * (jumpImpulse - sv);
-				GameManager.instance.PlayJumpAudio();
+			Vector3 up = Vector3.up; // or -Gravity.normalized if you use custom gravity
+
+			// How "floor-like" the surface must be
+			const float MIN_UP_DOT = 0.7f; // tweak (0.5 = ~60°, 0.7 = steeper floor only)
+
+			float upDot = Vector3.Dot(bestContact.normal.normalized, up);
+
+			// Wall or ceiling → no jump
+			if (upDot >= MIN_UP_DOT)
+            {
+				Vector3 velDifference = marbleVelocity - bestContact.velocity;
+				float sv = Vector3.Dot(bestContact.normal, velDifference);
+
+				if (sv < 0f)
+					sv = 0f;
+
+				if (sv < jumpImpulse)
+				{
+					marbleVelocity += bestContact.normal * (jumpImpulse - sv);
+					GameManager.instance.PlayJumpAudio();
+				}
 			}
 		}
 		for (int j = 0; j < contacts.Count; j++)

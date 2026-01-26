@@ -789,7 +789,6 @@ MonoBehaviour:
   marbleVelocity: {x: 0, y: 0, z: 0}
   marbleAngularVelocity: {x: 0, y: 0, z: 0}
   collidedTexture: {fileID: 0}
-  contacts: []
 --- !u!54 &623021669
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1395,7 +1394,7 @@ PrefabInstance:
     - target: {fileID: 5550206444172770267, guid: 268ee7a989320e547b2b4f2c644a2f69,
         type: 3}
       propertyPath: m_VersionIndex
-      value: 3108
+      value: 3117
       objectReference: {fileID: 0}
     - target: {fileID: 5550206444172770271, guid: 268ee7a989320e547b2b4f2c644a2f69,
         type: 3}
@@ -1540,7 +1539,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bec63c7e30a457f8c34d990a8eafdff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MissionPath: marble/data/missions/advanced/halfpipe2.mis
+  MissionPath: marble/data/missions/advanced/slipslide.mis
   MissionObjects:
   - {fileID: 1650841305}
   interiorPrefab: {fileID: 6653497135140199419, guid: 3806fd2cf50ec474f88647ee66b42828,
@@ -1550,6 +1549,8 @@ MonoBehaviour:
   triggerGoToTarget: {fileID: 5334438111094356951, guid: 60040cafa6d0e664b917f2b628126663,
     type: 3}
   inBoundsTrigger: {fileID: 5334438111094356951, guid: 372e325f1d62eec4993f5a643e8ee7a1,
+    type: 3}
+  helpTriggerInstance: {fileID: 3145264287921035594, guid: 6a4b8c1fc01eb15448974f97e35c6afb,
     type: 3}
   finishSignPrefab: {fileID: 5850111172839578870, guid: 9c88fed8e726d0e47ac147d8c9ef418a,
     type: 3}
@@ -1570,6 +1571,18 @@ MonoBehaviour:
   timeTravelPrefab: {fileID: 6709903032199683381, guid: 9a08629443bd4b649bdb2444375f8b83,
     type: 3}
   trapdoorPrefab: {fileID: 9139224675971453187, guid: 57833f265137b4147a0045febde57f3e,
+    type: 3}
+  roundBumperPrefab: {fileID: 4371505172029919544, guid: 599c23a8d1d3f7d4389b2d0c73771f66,
+    type: 3}
+  triangleBumperPrefab: {fileID: 6197722259391164959, guid: aea40361fe55de645a1729f5867c83dc,
+    type: 3}
+  ductFanPrefab: {fileID: 4750241748940862522, guid: 8c2d546dfe0124847a4a8486442a6d06,
+    type: 3}
+  tornadoPrefab: {fileID: 5500520526585647156, guid: 751c32212faf3fb489c78d73964205cd,
+    type: 3}
+  oilSlickPrefab: {fileID: 8764540366966745997, guid: a5b916fdb69986343bf2d733ff8d2e13,
+    type: 3}
+  landMinePrefab: {fileID: 3656766479995785901, guid: d8a8a5da6160dd14383952ecf2156899,
     type: 3}
   globalMarble: {fileID: 623021662}
   startPad: {fileID: 1216431834}

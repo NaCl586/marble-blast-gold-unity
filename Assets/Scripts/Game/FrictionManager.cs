@@ -47,6 +47,7 @@ public class FrictionManager : MonoBehaviour
         movement.staticFriction = m_staticFriction;
         movement.kineticFriction = m_kineticFriction;
         movement.bounceRestitution = m_restitution;
+        movement.bounce = m_bounce;
 
         defaultPhysicMaterial.staticFriction = 1;
         defaultPhysicMaterial.dynamicFriction = 1;

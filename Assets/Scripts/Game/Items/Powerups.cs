@@ -40,6 +40,8 @@ public class Powerups : MonoBehaviour
 
     [HideInInspector] public bool rotateMesh = true;
 
+    public bool showHelpOnPickup = false;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -51,6 +53,9 @@ public class Powerups : MonoBehaviour
         if (isActive)
         {
             Deactivate();
+
+            if(showHelpOnPickup)
+                GameUIManager.instance.SetCenterText("Press the Left Mouse Button to use the " + powerupName);
 
             if (autoUse)
             {

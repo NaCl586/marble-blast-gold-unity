@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 96301081124053357}
   serializedVersion: 2
   m_LocalRotation: {x: -0.0000020862658, y: 0.7071058, z: 0.7071078, w: 0.000002086273}
-  m_LocalPosition: {x: -0.00058971404, y: -0.0000029967912, z: -0.0024970027}
+  m_LocalPosition: {x: -0.00058971404, y: -0.0000029967912, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -87,7 +87,7 @@ Transform:
   m_GameObject: {fileID: 96301081830777587}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071058, y: -0, z: -0, w: 0.7071078}
-  m_LocalPosition: {x: 0, y: -0.0000029892847, z: -0.005578418}
+  m_LocalPosition: {x: 0, y: -0.0000029892847, z: -0.0005784179}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -151,6 +151,7 @@ MonoBehaviour:
   skinnedMeshRenderer: {fileID: 3577531354476464539}
   anim: {fileID: 96301081124053331}
   isActive: 1
+  rotateMesh: 1
   upVectorFrom: {fileID: 96301081830777587}
   upVectorTo: {fileID: 989020652508248212}
   transitionTime: 0.25
@@ -174,7 +175,7 @@ SphereCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Radius: 0.008
-  m_Center: {x: 0, y: -0.0015, z: -0.0005}
+  m_Center: {x: 0, y: 0, z: 0.002}
 --- !u!1 &989020652508248212
 GameObject:
   m_ObjectHideFlags: 0
@@ -200,7 +201,7 @@ Transform:
   m_GameObject: {fileID: 989020652508248212}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071058, y: -0, z: -0, w: 0.7071078}
-  m_LocalPosition: {x: 0, y: -0.000003007017, z: 0.0019215752}
+  m_LocalPosition: {x: 0, y: -0.000003007017, z: 0.0069215745}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
