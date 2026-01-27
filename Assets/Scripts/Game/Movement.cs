@@ -86,9 +86,7 @@ public class Movement : MonoBehaviour
 
 	private Rigidbody rigidBody;
 	private SphereCollider sphereCollider;
-	private int collisions;
-	private float lastJump;
-	private Vector3 lastNormal;
+	private Vector3 lastNormal = Vector3.zero;
 
 	Vector3 position;
 	Vector3 oldPos;
@@ -99,6 +97,7 @@ public class Movement : MonoBehaviour
 	private Vector2 lockedXZ;
 	private float baseStaticFriction;
 	private float baseKineticFriction;
+	private CollisionInfo bestContact;
 
 	private bool hasPosition = false;
 
@@ -276,7 +275,7 @@ public class Movement : MonoBehaviour
 
 	List<CollisionInfo> FindContacts(Bounds bounds)
 	{
-		var contacts = new List<CollisionInfo>();
+		var _contacts = new List<CollisionInfo>();
 		float _radius = marbleRadius + 0.0001f;
 
 		for (int _index = 0; _index < colTests.Count; _index++)
@@ -333,7 +332,7 @@ public class Movement : MonoBehaviour
 									/ Time.fixedDeltaTime;
 							}
 
-							contacts.Add(new CollisionInfo
+							CollisionInfo newCollision = new CollisionInfo
 							{
 								point = closest,
 								normal = contactNormal.normalized,
@@ -341,15 +340,17 @@ public class Movement : MonoBehaviour
 								restitution = _meshCollider.sharedMaterial?.bounciness ?? 0.5f,
 								friction = _meshCollider.sharedMaterial?.dynamicFriction ?? 0.5f,
 								velocity = colliderVelocity
-							});
+							};
 
+							_contacts.Add(newCollision);
+							lastNormal = newCollision.normal;
 						}
 					}
 				}
 			}
 		}
 
-		return contacts;
+		return _contacts;
 	}
 
 	private void AdvancePhysics(ref float _dt)
@@ -402,7 +403,7 @@ public class Movement : MonoBehaviour
 				/ Time.fixedDeltaTime;
 		}
 
-		contacts.Add(new CollisionInfo
+		CollisionInfo newCollision = new CollisionInfo
 		{
 			point = point,
 			normal = normal.normalized,
@@ -410,7 +411,10 @@ public class Movement : MonoBehaviour
 			restitution = _col.sharedMaterial?.bounciness ?? 0.5f,
 			friction = _col.sharedMaterial?.dynamicFriction ?? 0.5f,
 			velocity = colliderVelocity
-		});
+		};
+
+		contacts.Add(newCollision);
+		lastNormal = newCollision.normal;
 	}
 
 	void UpdateMove(ref float _dt, List<CollisionInfo> _contacts)
@@ -523,6 +527,9 @@ public class Movement : MonoBehaviour
 		}
 
 		position = newPos;
+
+		float contactPct = contacts.Count > 0 ? 1f : 0f;
+		UpdateRollSound(contactPct, slipAmount);
 	}
 
 	Vector3 NudgeToContacts(Vector3 velocity, Vector3 position, List<CollisionInfo> contacts)
@@ -698,15 +705,24 @@ public class Movement : MonoBehaviour
 							var restitution = bounceRestitution;
 							restitution *= _contacts[i].restitution;
 
+							// impact velocity = velocity INTO surface
+							float impactVelocity = -surfaceDot;
+
+							// MBG volume curve
+							float volume = Mathf.Pow(impactVelocity / 12f, 1.5f);
+							volume = Mathf.Clamp01(volume);
+
+							if (impactVelocity > 1f)
+								Marble.instance.PlayBounceSound(volume);
+
 							var velocityAdd = surfaceVel * -(1 + restitution);
 							var vAtC = sVel + Vector3.Cross(marbleAngularVelocity, _contacts[i].normal * -marbleRadius);
 							var normalVel = -Vector3.Dot(_contacts[i].normal, sVel);
 
-							// bounceEmitter(sVel.length() * restitution, contacts[i].normal);
-
 							vAtC -= _contacts[i].normal * Vector3.Dot(_contacts[i].normal, sVel);
 
 							var vAtCMag = vAtC.magnitude;
+
 							if (vAtCMag > 0.00001)
 							{
 								var friction = bounceKineticFriction * _contacts[i].friction;
@@ -723,6 +739,8 @@ public class Movement : MonoBehaviour
 								marbleVelocity -= Vector3.Cross(deltaOmega, _contacts[i].normal * marbleRadius);
 							}
 							marbleVelocity += velocityAdd;
+
+							slipAmount = Mathf.Clamp(vAtCMag / maxRollVelocity, 0f, 1.5f);
 						}
 					}
 
@@ -804,7 +822,12 @@ public class Movement : MonoBehaviour
 			}
 		}
 
-		CollisionInfo bestContact = (bestSurface != -1) ? contacts[bestSurface] : default(CollisionInfo);
+		bestContact = (bestSurface != -1) ? contacts[bestSurface] : null;
+
+		if (bestSurface == -1)
+		{
+			slipAmount = 0f;
+		}
 
 		if (contacts.Count > 0 && bounce > 0)
         {
@@ -850,7 +873,14 @@ public class Movement : MonoBehaviour
 		}
 		if (bestSurface != -1)
 		{
+			
+
 			Vector3 vAtC = marbleVelocity + (Vector3.Cross(marbleAngularVelocity, -bestContact.normal * marbleRadius)) - bestContact.velocity;
+
+			float rawSlip = vAtC.magnitude / maxRollVelocity;
+			// Accumulate peak slip (important!)
+			slipAmount = Mathf.Max(slipAmount, rawSlip);
+
 			float vAtCMag = vAtC.magnitude;
 			bool slipping = false;
 			Vector3 aFriction = Vector3.zero;
@@ -905,14 +935,100 @@ public class Movement : MonoBehaviour
 				}
 				A += Aadd;
 				a += aadd;
-
 			}
 			A += AFriction;
 			a += aFriction;
 		}
 		a += _aControl;
+
+		slipAmount = Mathf.MoveTowards(slipAmount, 0f, _dt * 2.5f);
 	}
 
+	public void ApplySurfaceBoost(float strength = 24.7f)
+	{
+		// Camera-relative movement direction projected onto gravity plane
+		Vector3 up = -GravitySystem.Gravity.normalized;
+
+		Vector3 camForward = Camera.main.transform.forward;
+		Vector3 movementVector = Vector3.ProjectOnPlane(camForward, up);
+
+		// Fallback if camera is looking straight along gravity
+		if (movementVector.sqrMagnitude < 1e-6f)
+			movementVector = Vector3.ProjectOnPlane(Camera.main.transform.right, up);
+
+		movementVector.Normalize();
+
+		// Remove component pushing into the surface (MBG behavior)
+		Vector3 n = lastNormal.normalized;
+		float dot = Vector3.Dot(movementVector, n);
+		movementVector -= n * dot;
+
+		if (movementVector.sqrMagnitude > 1e-6f)
+			movementVector.Normalize();
+
+		marbleVelocity += movementVector * strength;
+	}
+
+	void UpdateRollSound(float contactPct, float _slipAmount) 
+	{
+		Vector3 pos = transform.position;
+
+		AudioSource rollSound = Marble.instance.rollingSound;
+		AudioSource slipSound = Marble.instance.slidingSound;
+
+		if (contacts.Count == 0)
+		{
+			rollSound.volume = 0f;
+			slipSound.volume = 0f;
+			return;
+		}
+
+		// Relative rolling velocity
+		Vector3 rollVel = bestContact != null
+			? marbleVelocity - bestContact.velocity
+			: marbleVelocity;
+
+		float scale = rollVel.magnitude / maxRollVelocity;
+
+		// Roll volume
+		float rollVolume = 2f * scale;
+		if (rollVolume > 1f)
+			rollVolume = 1f;
+
+		if (contactPct < 0.05f && rollSound != null)
+			rollVolume = rollSound.volume / 5f;
+
+		// Slip volume
+		float slipVolume = 0f;
+		if (_slipAmount > 1e-4f)
+		{
+			slipVolume = _slipAmount / 5f;
+			if (slipVolume > 1f)
+				slipVolume = 1f;
+
+			rollVolume = 0f; 
+		}
+
+		rollVolume = Mathf.Max(0f, rollVolume);
+		slipVolume = Mathf.Max(0f, slipVolume);
+
+		if (rollSound != null)
+			rollSound.volume = rollVolume;
+
+		if (slipSound != null)
+			slipSound.volume = slipVolume;
+
+		// Pitch calculation
+		float pitch =
+			Mathf.Clamp(rollVel.magnitude / 15f, 0f, 1f) * 0.75f + 0.75f;
+
+		// JS safeguard equivalent (Unity is fine, but we keep it safe)
+		if (pitch < 0.2f)
+			pitch = 0.2f;
+
+		if (rollSound != null)
+			rollSound.pitch = pitch;
+	}
 
 	static class CollisionHelpers
 	{

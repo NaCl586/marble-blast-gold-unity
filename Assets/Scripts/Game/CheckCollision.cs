@@ -85,7 +85,7 @@ public class CheckCollision : MonoBehaviour
         float probeDistance = sphereCollider.radius + 0.1f;
         foreach (var dir in probeDirections)
         {
-            if (Physics.Raycast(transform.position, dir, out RaycastHit hit, probeDistance))
+            if (Physics.Raycast(transform.position, dir, out RaycastHit hit, probeDistance) && hit.collider != sphereCollider)
             {
                 RegisterCollision(hit.collider, hit);
                 return;
@@ -190,8 +190,6 @@ public class CheckCollision : MonoBehaviour
         isColliding = false;
         other = null;
         movement.collidedTexture = null;
-        point = Vector3.zero;
-        normal = Vector3.up;
 
         FrictionManager.instance.RevertMaterial();
     }

@@ -208,6 +208,8 @@ MonoBehaviour:
   skinnedMeshRenderer: {fileID: 7014905366394795885}
   anim: {fileID: 0}
   isActive: 1
+  rotateMesh: 1
+  showHelpOnPickup: 0
   superSpeedMultiplier: 25
 --- !u!65 &5884555302335599540
 BoxCollider:

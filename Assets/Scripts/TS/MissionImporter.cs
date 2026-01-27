@@ -25,6 +25,14 @@ namespace TS
         public GameObject helpTriggerInstance;
         [Space]
         public GameObject finishSignPrefab;
+        public GameObject signPlainPrefab;
+        public GameObject signPlainUpPrefab;
+        public GameObject signPlainDownPrefab;
+        public GameObject signPlainLeftPrefab;
+        public GameObject signPlainRightPrefab;
+        public GameObject signCautionPrefab;
+        public GameObject signCautionCautionPrefab;
+        public GameObject signCautionDangerPrefab;
         public GameObject gemPrefab;
         [Space]
         public GameObject antiGravityPrefab;
@@ -336,11 +344,29 @@ namespace TS
 
                     if (objectName == "StartPad")
                     {
-                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
-                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        Vector3 position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        Quaternion rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        Vector3 scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
 
+                        Transform spMesh = startPad.transform.Find("Mesh");
+                        Transform forwardPoint = spMesh.Find("Forward");
+
+                        // Position
                         startPad.transform.localPosition = position;
                         startPad.transform.localRotation = rotation;
+
+                        spMesh.transform.parent = null;
+                        spMesh.transform.localRotation = rotation;
+
+                        Vector3 localScale = spMesh.localScale;
+                        spMesh.localScale = new Vector3(
+                            scale.x * localScale.x,
+                            scale.y * localScale.y,
+                            scale.z * localScale.z
+                        );
+
+                        startPad.transform.LookAt(forwardPoint);
+                        startPad.transform.localRotation = Quaternion.Euler(-90, startPad.transform.localRotation.eulerAngles.y, startPad.transform.localRotation.eulerAngles.z);
                     }
 
                     else if (objectName == "EndPad")
@@ -352,6 +378,7 @@ namespace TS
                         finishPad.transform.localRotation = rotation;
                     }
 
+                    //Signs
                     else if (objectName == "SignFinish")
                     {
                         var gobj = Instantiate(finishSignPrefab, transform, false);
@@ -367,7 +394,128 @@ namespace TS
                         gobj.transform.localRotation = rotation;
                         gobj.transform.localScale = new Vector3(scale.x * localScale.x, scale.y * localScale.y, scale.z * localScale.z);
                     }
+                    else if (objectName == "SignPlain")
+                    {
+                        var gobj = Instantiate(signPlainPrefab, transform, false);
+                        gobj.name = "SignPlain";
 
+                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        var localScale = gobj.transform.localScale;
+
+                        gobj.transform.localPosition = position;
+                        gobj.transform.localRotation = rotation;
+                        gobj.transform.localScale = new Vector3(scale.x * localScale.x, scale.y * localScale.y, scale.z * localScale.z);
+                    }
+                    else if (objectName == "SignPlainUp")
+                    {
+                        var gobj = Instantiate(signPlainUpPrefab, transform, false);
+                        gobj.name = "SignPlainUp";
+
+                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        var localScale = gobj.transform.localScale;
+
+                        gobj.transform.localPosition = position;
+                        gobj.transform.localRotation = rotation;
+                        gobj.transform.localScale = new Vector3(scale.x * localScale.x, scale.y * localScale.y, scale.z * localScale.z);
+                    }
+                    else if (objectName == "SignPlainDown")
+                    {
+                        var gobj = Instantiate(signPlainDownPrefab, transform, false);
+                        gobj.name = "SignPlainDown";
+
+                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        var localScale = gobj.transform.localScale;
+
+                        gobj.transform.localPosition = position;
+                        gobj.transform.localRotation = rotation;
+                        gobj.transform.localScale = new Vector3(scale.x * localScale.x, scale.y * localScale.y, scale.z * localScale.z);
+                    }
+                    else if (objectName == "SignPlainLeft")
+                    {
+                        var gobj = Instantiate(signPlainLeftPrefab, transform, false);
+                        gobj.name = "SignPlainLeft";
+
+                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        var localScale = gobj.transform.localScale;
+
+                        gobj.transform.localPosition = position;
+                        gobj.transform.localRotation = rotation;
+                        gobj.transform.localScale = new Vector3(scale.x * localScale.x, scale.y * localScale.y, scale.z * localScale.z);
+                    }
+                    else if (objectName == "SignPlainRight")
+                    {
+                        var gobj = Instantiate(signPlainRightPrefab, transform, false);
+                        gobj.name = "SignPlainRight";
+
+                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        var localScale = gobj.transform.localScale;
+
+                        gobj.transform.localPosition = position;
+                        gobj.transform.localRotation = rotation;
+                        gobj.transform.localScale = new Vector3(scale.x * localScale.x, scale.y * localScale.y, scale.z * localScale.z);
+                    }
+                    else if (objectName == "SignCaution")
+                    {
+                        var gobj = Instantiate(signCautionPrefab, transform, false);
+                        gobj.name = "SignCaution";
+
+                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        var localScale = gobj.transform.localScale;
+
+                        gobj.transform.localPosition = position;
+                        gobj.transform.localRotation = rotation;
+                        gobj.transform.localScale = new Vector3(scale.x * localScale.x, scale.y * localScale.y, scale.z * localScale.z);
+                    }
+                    else if (objectName == "SignCautionCaution")
+                    {
+                        var gobj = Instantiate(signCautionCautionPrefab, transform, false);
+                        gobj.name = "SignCautionCaution";
+
+                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        var localScale = gobj.transform.localScale;
+
+                        gobj.transform.localPosition = position;
+                        gobj.transform.localRotation = rotation;
+                        gobj.transform.localScale = new Vector3(scale.x * localScale.x, scale.y * localScale.y, scale.z * localScale.z);
+                    }
+                    else if (objectName == "SignCautionDanger")
+                    {
+                        var gobj = Instantiate(signCautionDangerPrefab, transform, false);
+                        gobj.name = "SignCautionDanger";
+
+                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
+                        var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        var localScale = gobj.transform.localScale;
+
+                        gobj.transform.localPosition = position;
+                        gobj.transform.localRotation = rotation;
+                        gobj.transform.localScale = new Vector3(scale.x * localScale.x, scale.y * localScale.y, scale.z * localScale.z);
+                    }
+
+                    //Hazards
                     else if (objectName.ToLower() == "trapdoor")
                     {
                         var gobj = Instantiate(trapdoorPrefab, transform, false);

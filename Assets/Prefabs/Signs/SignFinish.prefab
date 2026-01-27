@@ -266,7 +266,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6513354812297692748}
   m_Layer: 0
-  m_Name: FinishSign
+  m_Name: SignFinish
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

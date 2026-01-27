@@ -23,17 +23,6 @@ public class SuperSpeed : Powerups
     {
         GameManager.instance.PlayAudioClip(useSound);
 
-        Vector3 normal = Marble.instance.GetComponent<CheckCollision>().normal;
-
-        Vector3 cameraRot = (Marble.instance.transform.position - Camera.main.transform.position);
-        float normalInfluence = Vector3.Dot(cameraRot, normal);
-        Vector3 direction = cameraRot - (normalInfluence * normal);
-        if (direction.magnitude == 0f)
-            direction = (new Vector3(cameraRot.x, 0f, cameraRot.z)).normalized;
-        else
-            direction = (new Vector3(cameraRot.x, direction.y, cameraRot.z)).normalized;
-
-        direction *= superSpeedMultiplier;
-        Movement.instance.marbleVelocity += direction;
+        Movement.instance.ApplySurfaceBoost(superSpeedMultiplier);
     }
 }

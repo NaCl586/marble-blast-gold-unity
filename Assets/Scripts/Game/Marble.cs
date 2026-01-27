@@ -10,8 +10,8 @@ public class Marble : MonoBehaviour
     AudioSource audioSource;
     [SerializeField] AudioClip jumpSfx;
     [SerializeField] AudioClip[] bounceSfx;
-    [SerializeField] AudioSource rollingSound;
-    [SerializeField] AudioSource slidingSound;
+    public AudioSource rollingSound;
+    public AudioSource slidingSound;
     [SerializeField] AudioSource useShockAbsorberSound;
     [SerializeField] AudioSource useSuperBounceSound;
     [SerializeField] AudioSource gyroSound;
@@ -44,6 +44,7 @@ public class Marble : MonoBehaviour
     private void Start()
     {
         movement = GetComponent<Movement>();
+        audioSource = GetComponent<AudioSource>();
 
         startPoint = GameManager.instance.startPad.transform.Find("Spawn");
     }
@@ -112,6 +113,12 @@ public class Marble : MonoBehaviour
             gyroSound.Stop();
         else if (_powerup == PowerupType.TimeTravel)
             TTActiveSound.Stop();
+    }
+
+    public void PlayBounceSound(float volume)
+    {
+        audioSource.volume = volume;
+        audioSource.PlayOneShot(bounceSfx[Random.Range(0, bounceSfx.Length)]);
     }
 
     public void ToggleGlowBounce(bool _toggle)
