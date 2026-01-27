@@ -362,7 +362,7 @@ public class Movement : MonoBehaviour
 
 		contacts = FindContacts(searchBox);
 
-		UpdateMove(ref _dt, contacts);
+		UpdateMove(ref _dt);
 	}
 
 	void UpdateMeshTransform(MeshData data)
@@ -382,7 +382,7 @@ public class Movement : MonoBehaviour
 		}
 	}
 
-	void UpdateMove(ref float _dt, List<CollisionInfo> _contacts)
+	void UpdateMove(ref float _dt)
 	{
 		// Compute player input forces
 		bool isMoving = ComputeMoveForces(marbleAngularVelocity, out var aControl, out var desiredOmega);
@@ -390,15 +390,14 @@ public class Movement : MonoBehaviour
 		// First pass: cancel velocity with bounce enabled
 		bool stoppedPaths = false;
 
-		VelocityCancel(_contacts, !isMoving, false, ref stoppedPaths);
+		VelocityCancel(!isMoving, false, ref stoppedPaths);
 
 		// External forces (gravity, air control)
-		Vector3 A = GetExternalForces(_dt, _contacts);
+		Vector3 A = GetExternalForces(_dt);
 
 		// Apply contact forces (friction, jump, bounce)
 		ApplyContactForces(
 			_dt,
-			_contacts,
 			!isMoving,
 			aControl,
 			desiredOmega,
@@ -430,7 +429,7 @@ public class Movement : MonoBehaviour
 		}
 
 		// Second pass: cancel velocity with bounce disabled
-		VelocityCancel(_contacts, !isMoving, true, ref stoppedPaths);
+		VelocityCancel(!isMoving, true, ref stoppedPaths);
 
 		Vector3 moveVel = marbleVelocity;
 
@@ -453,7 +452,7 @@ public class Movement : MonoBehaviour
 
 		var expectedPos = position;
 
-		var newPos = NudgeToContacts(marbleVelocity, expectedPos, _contacts);
+		var newPos = NudgeToContacts(marbleVelocity, expectedPos);
 
 		if (!canMove)
 		{
@@ -497,7 +496,7 @@ public class Movement : MonoBehaviour
 		UpdateRollSound(contactPct, slipAmount);
 	}
 
-	Vector3 NudgeToContacts(Vector3 velocity, Vector3 position, List<CollisionInfo> contacts)
+	Vector3 NudgeToContacts(Vector3 velocity, Vector3 position)
 	{
 		var it = 0;
 		var prevResolved = 0;
@@ -612,10 +611,10 @@ public class Movement : MonoBehaviour
 		_sideDir = _camRight;
 	}
 
-	private Vector3 GetExternalForces(float _dt, List<CollisionInfo> _contacts)
+	private Vector3 GetExternalForces(float _dt)
 	{
 		Vector3 _force = GravitySystem.Gravity.normalized * gravity;
-		if (_contacts.Count == 0)
+		if (contacts.Count == 0)
 		{
 			GetMarbleAxis(out var _sideDir, out var _motionDir, out Vector3 _);
 			_force += (_sideDir * inputMovement.x + _motionDir * inputMovement.y) * airAcceleration;
@@ -625,7 +624,6 @@ public class Movement : MonoBehaviour
 	}
 
 	bool VelocityCancel(
-		List<CollisionInfo> _contacts,
 		bool _surfaceSlide,
 		bool _noBounce,
 		ref bool stoppedPaths)
@@ -638,15 +636,15 @@ public class Movement : MonoBehaviour
 		{
 			done = true;
 			itersIn++;
-			for (var i = 0; i < _contacts.Count; i++)
+			for (var i = 0; i < contacts.Count; i++)
 			{
-				var sVel = marbleVelocity - _contacts[i].velocity;
-				var surfaceDot = Vector3.Dot(_contacts[i].normal, sVel);
+				var sVel = marbleVelocity - contacts[i].velocity;
+				var surfaceDot = Vector3.Dot(contacts[i].normal, sVel);
 
 				if ((!looped && surfaceDot < 0.0) || surfaceDot < -SurfaceDotThreshold)
 				{
 					var velLen = marbleVelocity.magnitude;
-					var surfaceVel = _contacts[i].normal * surfaceDot;
+					var surfaceVel = contacts[i].normal * surfaceDot;
 
 					if (_noBounce)
 					{
@@ -654,7 +652,7 @@ public class Movement : MonoBehaviour
 					}
 					else
 					{
-						if (_contacts[i].velocity.magnitude < 0.0001f && !_surfaceSlide && surfaceDot > -maxDotSlide * velLen)
+						if (contacts[i].velocity.magnitude < 0.0001f && !_surfaceSlide && surfaceDot > -maxDotSlide * velLen)
 						{
 							marbleVelocity -= surfaceVel;
 							marbleVelocity.Normalize();
@@ -668,7 +666,7 @@ public class Movement : MonoBehaviour
 						else
 						{
 							var restitution = bounceRestitution;
-							restitution *= _contacts[i].restitution;
+							restitution *= contacts[i].restitution;
 
 							// impact velocity = velocity INTO surface
 							float impactVelocity = -surfaceDot;
@@ -681,18 +679,18 @@ public class Movement : MonoBehaviour
 								Marble.instance.PlayBounceSound(volume);
 
 							var velocityAdd = surfaceVel * -(1 + restitution);
-							var vAtC = sVel + Vector3.Cross(marbleAngularVelocity, _contacts[i].normal * -marbleRadius);
-							var normalVel = -Vector3.Dot(_contacts[i].normal, sVel);
+							var vAtC = sVel + Vector3.Cross(marbleAngularVelocity, contacts[i].normal * -marbleRadius);
+							var normalVel = -Vector3.Dot(contacts[i].normal, sVel);
 
-							Marble.instance.BounceEmitter(sVel.magnitude * restitution, _contacts[i]);
+							Marble.instance.BounceEmitter(sVel.magnitude * restitution, contacts[i]);
 
-							vAtC -= _contacts[i].normal * Vector3.Dot(_contacts[i].normal, sVel);
+							vAtC -= contacts[i].normal * Vector3.Dot(contacts[i].normal, sVel);
 
 							var vAtCMag = vAtC.magnitude;
 
 							if (vAtCMag > 0.00001)
 							{
-								var friction = bounceKineticFriction * _contacts[i].friction;
+								var friction = bounceKineticFriction * contacts[i].friction;
 
 								var angVMagnitude = 5 * friction * normalVel / (2 * marbleRadius);
 								if (vAtCMag / marbleRadius < angVMagnitude)
@@ -700,10 +698,10 @@ public class Movement : MonoBehaviour
 
 								var vAtCDir = vAtC * (1 / vAtCMag);
 
-								var deltaOmega = Vector3.Cross(_contacts[i].normal, vAtCDir) * angVMagnitude;
+								var deltaOmega = Vector3.Cross(contacts[i].normal, vAtCDir) * angVMagnitude;
 								marbleAngularVelocity += deltaOmega;
 
-								marbleVelocity -= Vector3.Cross(deltaOmega, _contacts[i].normal * marbleRadius);
+								marbleVelocity -= Vector3.Cross(deltaOmega, contacts[i].normal * marbleRadius);
 							}
 							marbleVelocity += velocityAdd;
 
@@ -721,7 +719,7 @@ public class Movement : MonoBehaviour
 				if (_noBounce)
 					done = true;
 
-				foreach (var contact in _contacts)
+				foreach (var contact in contacts)
 					contact.velocity = Vector3.zero;
 			}
 		} while (!done && itersIn < 1e4); // Maximum limit pls
@@ -729,12 +727,12 @@ public class Movement : MonoBehaviour
 		{
 			var gotOne = false;
 			var dir = Vector3.zero;
-			for (var j = 0; j < _contacts.Count; j++)
+			for (var j = 0; j < contacts.Count; j++)
 			{
-				var dir2 = dir + _contacts[j].normal;
+				var dir2 = dir + contacts[j].normal;
 				if (dir2.sqrMagnitude < 0.01)
 				{
-					dir2 = dir2 + _contacts[j].normal;
+					dir2 = dir2 + contacts[j].normal;
 				}
 				dir = dir2;
 				dir.Normalize();
@@ -744,15 +742,15 @@ public class Movement : MonoBehaviour
 			{
 				dir.Normalize();
 				var soFar = 0.0;
-				for (var k = 0; k < _contacts.Count; k++)
+				for (var k = 0; k < contacts.Count; k++)
 				{
-					var dist = marbleRadius - _contacts[k].contactDistance;
+					var dist = marbleRadius - contacts[k].contactDistance;
 					var timeToSeparate = 0.1;
-					var vel = marbleVelocity - _contacts[k].velocity;
-					var outVel = Vector3.Dot(vel + dir * (float)soFar, _contacts[k].normal);
+					var vel = marbleVelocity - contacts[k].velocity;
+					var outVel = Vector3.Dot(vel + dir * (float)soFar, contacts[k].normal);
 					if (dist > timeToSeparate * outVel)
 					{
-						soFar += (dist - outVel * timeToSeparate) / timeToSeparate / Vector3.Dot(_contacts[k].normal, dir);
+						soFar += (dist - outVel * timeToSeparate) / timeToSeparate / Vector3.Dot(contacts[k].normal, dir);
 					}
 				}
 				if (soFar < -25.0)
@@ -768,7 +766,6 @@ public class Movement : MonoBehaviour
 
 	void ApplyContactForces(
 		float _dt,
-		List<CollisionInfo> contacts,
 		bool _isCentered,
 		Vector3 _aControl,
 		Vector3 _desiredOmega,
@@ -798,7 +795,7 @@ public class Movement : MonoBehaviour
 
 		if (contacts.Count > 0 && bounce > 0)
         {
-			Vector3 n = contacts[contacts.Count - 1].normal.normalized;
+			Vector3 n = GetComponent<CheckCollision>().normal.normalized;
 
 			// component of velocity along the normal
 			float normalComponent = Vector3.Dot(marbleVelocity, n);

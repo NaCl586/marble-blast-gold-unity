@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Oil Slick
   m_EditorClassIdentifier: 
   textures:
-  - {fileID: 2800000, guid: e7db389b89cc1c54caf6b18f175a3806, type: 3}
+  - {fileID: 2800000, guid: c5549a1f0e4bcb548bddc1f318ab3a33, type: 3}
   - {fileID: 2800000, guid: 5bb8678bae7cfb74a9653b443a938a24, type: 3}
   friction: 0.05
   restitution: 0.5

@@ -5,7 +5,10 @@ using UnityEngine;
 public class FrictionManager : MonoBehaviour
 {
     public static FrictionManager instance;
-    void Awake() => instance = this;
+    void Awake()
+    {
+        instance = this;
+    }
 
     [Header("Surface Definitions")]
     [SerializeField] private FrictionSO[] frictions;
@@ -25,16 +28,20 @@ public class FrictionManager : MonoBehaviour
     private FrictionSO currentFriction;
 
     public void Start()
-    {
+    {   
         movement = GetComponent<Movement>();
         checkCollision = GetComponent<CheckCollision>();
 
-        m_staticFriction = movement.staticFriction;
-        m_kineticFriction = movement.kineticFriction;
-        m_restitution = movement.bounceRestitution;
-        m_bounce = movement.bounce;
+        m_staticFriction = 1.1f;
+        m_kineticFriction = 0.7f;
+        m_restitution = 0.5f;
+        m_bounce = 0f;
 
         currentFriction = null; // start with defaults
+
+        defaultPhysicMaterial.staticFriction = 0.7f;
+        defaultPhysicMaterial.dynamicFriction = 1.1f;
+        defaultPhysicMaterial.bounciness = 1;
     }
 
     public void RevertMaterial()
@@ -49,8 +56,8 @@ public class FrictionManager : MonoBehaviour
         movement.bounceRestitution = m_restitution;
         movement.bounce = m_bounce;
 
-        defaultPhysicMaterial.staticFriction = 1;
-        defaultPhysicMaterial.dynamicFriction = 1;
+        defaultPhysicMaterial.staticFriction = 0.7f;
+        defaultPhysicMaterial.dynamicFriction = 1.1f;
         defaultPhysicMaterial.bounciness = 1;
     }
 
@@ -85,6 +92,7 @@ public class FrictionManager : MonoBehaviour
 
     public FrictionSO SearchFriction(string _name)
     {
+        Debug.Log(_name);
         if (string.IsNullOrEmpty(_name)) return null;
 
         foreach (var frictionSO in frictions)

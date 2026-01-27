@@ -194,11 +194,24 @@ public class CheckCollision : MonoBehaviour
         FrictionManager.instance.RevertMaterial();
     }
 
+    public Vector3 Rounding(Vector3 _vector)
+    {
+        var x = _vector.x;
+        var y = _vector.y;
+        var z = _vector.z;
+
+        if (Mathf.Abs(x) < 0.1f) x = 0;
+        if (Mathf.Abs(y) < 0.1f) y = 0;
+        if (Mathf.Abs(z) < 0.1f) z = 0;
+
+        return new Vector3(x, y, z).normalized;
+    }
+
     private void ApplyCollision(RaycastHit hit)
     {
         if (hit.collider == null) return;
 
-        normal = hit.normal;
+        normal = Rounding(hit.normal);
         point = hit.point;
         other = hit.collider;
         isColliding = true;
@@ -211,6 +224,9 @@ public class CheckCollision : MonoBehaviour
             detectedTextureName = detectedTextureName.Substring(0, detectedTextureName.Length - instanceSuffix.Length);
 
         FrictionSO frictionSO = FrictionManager.instance.SearchFriction(detectedTextureName);
+
+        if(frictionSO)
+            Debug.Log(frictionSO.name + " " + detectedTextureName);
 
         if (frictionSO)
             FrictionManager.instance.ApplyMaterial(frictionSO);
