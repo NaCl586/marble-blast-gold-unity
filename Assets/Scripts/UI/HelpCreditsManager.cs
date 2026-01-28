@@ -42,6 +42,8 @@ public class HelpCreditsManager : MonoBehaviour
 
     public void Start()
     {
+        Time.timeScale = 1f;
+
         next.onClick.AddListener(NextPage);
         prev.onClick.AddListener(PrevPage);
         home.onClick.AddListener(() => SceneManager.LoadScene("MainMenu"));

@@ -106,15 +106,10 @@ public class MissionInfo : MonoBehaviour
                 100f
             );
 
-            String directory = misPath;
-            int idx = misPath.IndexOf("marble", StringComparison.OrdinalIgnoreCase);
-            if (idx >= 0)
-                directory = directory.Substring(idx);
-
             Mission newMission = new Mission
             {
                 levelImage = sprite,
-                directory = directory,
+                directory = "marble/data/missions/" + difficulty.ToString() + "/" + levelName + ".mis",
                 levelNumber = -1,
             };
 

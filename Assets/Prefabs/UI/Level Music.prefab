@@ -143,5 +143,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   musics:
   - {fileID: 8300000, guid: e58c4f13ba3281240a9b38c637e714a3, type: 3}
-  - {fileID: 8300000, guid: b9fdedd58dab14e4ea1260ef7cabc5d0, type: 3}
   - {fileID: 8300000, guid: b1991c4b29256da4baf78dbe4ce378b6, type: 3}
+  - {fileID: 8300000, guid: b9fdedd58dab14e4ea1260ef7cabc5d0, type: 3}

@@ -24,8 +24,9 @@ public class Marble : MonoBehaviour
 
     public GameObject bounceParticle;
 
-    private Movement movement;
-    private Transform startPoint;
+    public Movement movement;
+    public FrictionManager frictionManager;
+    public Transform startPoint;
     public class OnRespawn : UnityEvent { };
     public static OnRespawn onRespawn = new OnRespawn();
 
@@ -45,10 +46,7 @@ public class Marble : MonoBehaviour
 
     private void Start()
     {
-        movement = GetComponent<Movement>();
         audioSource = GetComponent<AudioSource>();
-
-        startPoint = GameManager.instance.startPad.transform.Find("Spawn");
     }
 
     private void FixedUpdate()
@@ -61,7 +59,7 @@ public class Marble : MonoBehaviour
                 GameManager.instance.RestartLevel();
         }
 
-        if (Input.GetKey(ControlBinding.instance.usePowerup) && !GameManager.isPaused && !GameManager.gameFinish)
+        if (Input.GetKey(ControlBinding.instance.usePowerup) && !GameManager.isPaused && !GameManager.gameFinish && Movement.instance.canMove)
             UsePowerup();
     }
 
@@ -87,9 +85,6 @@ public class Marble : MonoBehaviour
 
     public void Respawn()
     {
-        if (startPoint == null)
-            return;
-
         movement.SetPosition(startPoint.position);
     }
 
@@ -139,13 +134,9 @@ public class Marble : MonoBehaviour
 
         //super bounce
         if (GameManager.instance.superBounceIsActive)
-        {
             StopSound(PowerupType.SuperBounce);
-        }
         else if (GameManager.instance.shockAbsorberIsActive)
-        {
             StopSound(PowerupType.ShockAbsorber);
-        }
 
         GameManager.instance.superBounceIsActive = false;
         GameManager.instance.shockAbsorberIsActive = false;
@@ -155,7 +146,7 @@ public class Marble : MonoBehaviour
         else if (GameManager.instance.superBounceIsActive)
             movement.bounceRestitution = 1;
         else
-            movement.bounceRestitution = movement.GetComponent<FrictionManager>().m_restitution;
+            movement.bounceRestitution = 0.5f;
     }
 
     public void UseSuperBounce()
@@ -171,7 +162,7 @@ public class Marble : MonoBehaviour
             GameManager.instance.superBounceIsActive = true;
 
             //marble is changed into super bounce material
-            FrictionManager.instance.RevertMaterial();
+            frictionManager.RevertMaterial();
             movement.bounceRestitution = 1f;
         }
     }
@@ -190,7 +181,7 @@ public class Marble : MonoBehaviour
             GameManager.instance.shockAbsorberIsActive = true;
 
             //marble is changed into super bounce material
-            FrictionManager.instance.RevertMaterial();
+            frictionManager.RevertMaterial();
             movement.bounceRestitution = 0f;
         }
     }

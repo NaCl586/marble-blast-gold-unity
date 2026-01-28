@@ -597,6 +597,9 @@ MonoBehaviour:
   glowBounce: {fileID: 6729020119543148597}
   bounceParticle: {fileID: 2747320370206154753, guid: 99e7300f735da1546ad1571b44ea5c84,
     type: 3}
+  movement: {fileID: 6222272426371884095}
+  frictionManager: {fileID: 4115090105305160933}
+  startPoint: {fileID: 0}
 --- !u!114 &4115090105305160933
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -618,6 +621,8 @@ MonoBehaviour:
   defaultPhysicMaterial: {fileID: 13400000, guid: 9f602b3fd3a59419e8822de779a930ea,
     type: 2}
   m_restitution: 0
+  movement: {fileID: 6222272426371884095}
+  checkCollision: {fileID: 5528955957562662288}
 --- !u!82 &3094592717009676412
 AudioSource:
   m_ObjectHideFlags: 0

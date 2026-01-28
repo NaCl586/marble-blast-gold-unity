@@ -149,6 +149,8 @@ public class GameManager : MonoBehaviour
         restartButton.onClick.AddListener(RestartLevel);
 
         nameInputField.onEndEdit.AddListener(UpdateName);
+
+        spawnAudioPlayed = false;
     }
 
     public void InitGemCount()
@@ -264,6 +266,11 @@ public class GameManager : MonoBehaviour
 
     public void InvokeRespawn() => Marble.onRespawn?.Invoke();
 
+    public IEnumerator ResetSpawnAudio() 
+    {
+        yield return new WaitForSeconds(0.1f);
+        spawnAudioPlayed = false;
+    }
     public void RestartLevel()
     {
         TogglePause();
@@ -279,9 +286,16 @@ public class GameManager : MonoBehaviour
         Marble.onRespawn?.Invoke();
     }
 
+    bool spawnAudioPlayed = false;
     public void Respawn()
     {
-        PlaySpawnAudio();
+        if(!spawnAudioPlayed)
+        {
+            PlaySpawnAudio();
+            spawnAudioPlayed = true;
+
+            StartCoroutine(ResetSpawnAudio());
+        }
 
         CancelInvoke();
         gameFinish = false;

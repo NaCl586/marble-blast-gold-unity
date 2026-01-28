@@ -978,7 +978,7 @@ public class Movement : MonoBehaviour
 		float slipVolume = 0f;
 		if (_slipAmount > 1e-4f)
 		{
-			slipVolume = _slipAmount / 5f;
+			slipVolume = _slipAmount / 2.5f;
 			if (slipVolume > 1f)
 				slipVolume = 1f;
 

@@ -6,11 +6,7 @@ using Antlr4.Runtime;
 using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
-
-#if UNITY_EDITOR
-using UnityEditor;
-using UnityEditor.SceneManagement;
-#endif
+using System.Globalization;
 
 namespace TS
 {
@@ -61,11 +57,6 @@ namespace TS
 
         void Start()
         {
-#if UNITY_EDITOR
-            // Prevent auto-import when not in Play Mode
-            if (!Application.isPlaying)
-                return;
-#endif
             ImportMission();
         }
 
@@ -73,8 +64,6 @@ namespace TS
         {
             if (string.IsNullOrEmpty(MissionInfo.instance.MissionPath))
                 return;
-
-            string fileName = Path.GetFileNameWithoutExtension(Path.Combine(Application.streamingAssetsPath, MissionInfo.instance.MissionPath));
 
             var lexer = new TSLexer(
                 new AntlrFileStream(Path.Combine(Application.streamingAssetsPath, MissionInfo.instance.MissionPath))
@@ -791,9 +780,9 @@ namespace TS
             globalMarble.GetComponent<Movement>().GenerateMeshData();
 
             Time.timeScale = 1f;
-            GameManager.instance.InitGemCount();                       
-            Marble.onRespawn?.Invoke(); 
+            GameManager.instance.InitGemCount();   
             GameManager.instance.PlayLevelMusic();
+            Marble.onRespawn?.Invoke();
         }
 
         int CountInstantiations(TSObject mission)
@@ -833,34 +822,6 @@ namespace TS
 
             return Mathf.Max(1, count);
         }
-
-
-#if UNITY_EDITOR
-        public void ImportMissionInEditor()
-        {
-            if (!EditorUtility.DisplayDialog(
-                "Import Mission",
-                "This will regenerate the mission and overwrite existing imported objects.\nContinue?",
-                "Import",
-                "Cancel"))
-                return;
-
-            // Delete existing children
-            var children = new List<GameObject>();
-            foreach (Transform child in transform)
-                children.Add(child.gameObject);
-
-            foreach (var child in children)
-                Undo.DestroyObjectImmediate(child);
-
-            ImportMission();
-
-/*            EditorSceneManager.MarkSceneDirty(gameObject.scene);
-            EditorSceneManager.SaveScene(gameObject.scene);
-
-            Debug.Log("Mission imported and scene saved.");*/
-        }
-#endif
 
         // -------------------------
         // Conversion helpers
@@ -969,9 +930,14 @@ namespace TS
         }
 
 
+        private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
+
         private float[] ParseVectorString(string vs)
         {
-            return vs.Split(' ').Select(float.Parse).ToArray();
+            return vs
+                .Split(' ')
+                .Select(s => float.Parse(s, Invariant))
+                .ToArray();
         }
 
         private string ResolvePath(string assetPath, string misPath)

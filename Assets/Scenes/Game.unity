@@ -2425,6 +2425,12 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c318103c6556a29429eeb8f6e3e9e54d, type: 3}
+--- !u!4 &804230634897802342 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1475041541272904278, guid: c318103c6556a29429eeb8f6e3e9e54d,
+    type: 3}
+  m_PrefabInstance: {fileID: 804230634897802341}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2389761432775727261
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2433,6 +2439,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2259544043996708080, guid: c0050dcb2853bc94ba7ca3163c0b5e68,
+        type: 3}
+      propertyPath: startPoint
+      value: 
+      objectReference: {fileID: 804230634897802342}
     - target: {fileID: 2259544043996708080, guid: c0050dcb2853bc94ba7ca3163c0b5e68,
         type: 3}
       propertyPath: gyrocopterBlades
@@ -2684,6 +2695,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: MissionInfo
+      objectReference: {fileID: 0}
+    - target: {fileID: 2900114141589439554, guid: a6f3b40817226a742b5103de061cdd10,
+        type: 3}
+      propertyPath: level
+      value: 24
       objectReference: {fileID: 0}
     - target: {fileID: 2900114141589439554, guid: a6f3b40817226a742b5103de061cdd10,
         type: 3}

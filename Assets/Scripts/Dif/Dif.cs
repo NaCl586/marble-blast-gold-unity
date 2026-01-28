@@ -12,8 +12,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-#if UNITY_EDITOR
-[ExecuteInEditMode]
 public class Dif : MonoBehaviour {
 
 	public string filePath;
@@ -232,4 +230,3 @@ public class Dif : MonoBehaviour {
 		return texture;
 	}
 }
-#endif
