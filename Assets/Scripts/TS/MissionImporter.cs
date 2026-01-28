@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using Antlr4.Runtime;
 using UnityEngine;
+using System.Collections;
+using UnityEngine.UI;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -14,7 +16,7 @@ namespace TS
 {
     public class MissionImporter : MonoBehaviour
     {
-        public string MissionPath;
+        [SerializeField] private bool debugImportProgress = true;
         public List<TSObject> MissionObjects;
 
         [Header("Prefabs")]
@@ -66,15 +68,15 @@ namespace TS
             ImportMission();
         }
 
-        public void ImportMission()
+        void ImportMission()
         {
-            if (string.IsNullOrEmpty(MissionPath))
+            if (string.IsNullOrEmpty(MissionInfo.instance.MissionPath))
                 return;
 
-            string fileName = Path.GetFileNameWithoutExtension(Path.Combine(Application.streamingAssetsPath, MissionPath));
+            string fileName = Path.GetFileNameWithoutExtension(Path.Combine(Application.streamingAssetsPath, MissionInfo.instance.MissionPath));
 
             var lexer = new TSLexer(
-                new AntlrFileStream(Path.Combine(Application.streamingAssetsPath, MissionPath))
+                new AntlrFileStream(Path.Combine(Application.streamingAssetsPath, MissionInfo.instance.MissionPath))
             );
             var parser = new TSParser(new CommonTokenStream(lexer));
             var file = parser.start();
@@ -103,50 +105,12 @@ namespace TS
 
             foreach (var obj in mission.RecursiveChildren())
             {
-                //Mission info
-                if(obj.ClassName == "ScriptObject" && obj.Name == "MissionInfo")
-                {
-                    int _time = -1;
-                    if (int.TryParse(obj.GetField("time"), out _time))
-                        if(_time != 0)
-                            GameManager.instance.time = _time;
-                        else
-                            GameManager.instance.time = -1;
-                    else
-                        GameManager.instance.time = -1;
-
-                    GameManager.instance.missionName = fileName;
-                    GameManager.instance.levelName = (obj.GetField("name"));
-                    GameManager.instance.description = (obj.GetField("desc"));
-                    GameManager.instance.startHelpText = (obj.GetField("startHelpText"));
-
-                    int _level = 0;
-                    if (int.TryParse(obj.GetField("level"), out _level))
-                        GameManager.instance.level = _level;
-                    else
-                        GameManager.instance.level = 0;
-
-                    GameManager.instance.artist = (obj.GetField("artist"));
-
-                    int _goldTime = -1;
-                    if (int.TryParse(obj.GetField("goldTime"), out _goldTime))
-                        GameManager.instance.goldTime = _goldTime;
-                    else
-                        GameManager.instance.goldTime = -1;
-
-                    int _ultimateTime = -1;
-                    if (int.TryParse(obj.GetField("ultimateTime"), out _ultimateTime))
-                        GameManager.instance.ultimateTime = _ultimateTime;
-                    else
-                        GameManager.instance.ultimateTime = -1;
-                }
-
                 //Gem
-                else if(obj.ClassName == "Item")
+                if (obj.ClassName == "Item")
                 {
                     string objectName = obj.GetField("dataBlock");
-                    
-                    if(objectName.StartsWith("GemItem"))
+
+                    if (objectName.StartsWith("GemItem"))
                     {
                         var gobj = Instantiate(gemPrefab, transform, false);
                         gobj.name = "Gem";
@@ -283,12 +247,12 @@ namespace TS
                         var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
 
                         string showInfo = obj.GetField("showHelpOnPickup");
-                        if(showInfo != string.Empty)
+                        if (showInfo != string.Empty)
                         {
                             bool showInfotutorial = int.Parse(showInfo) == 1;
                             gobj.GetComponent<Powerups>().showHelpOnPickup = showInfotutorial;
                         }
-                        
+
                         var localScale = gobj.transform.localScale;
 
                         gobj.transform.localPosition = position;
@@ -328,7 +292,7 @@ namespace TS
                     gobj.transform.localRotation = rotation;
                     gobj.transform.localScale = scale;
 
-                    var difPath = ResolvePath(obj.GetField("interiorFile"), MissionPath);
+                    var difPath = ResolvePath(obj.GetField("interiorFile"), MissionInfo.instance.MissionPath);
                     var dif = gobj.GetComponent<Dif>();
                     dif.filePath = difPath;
                     if (!dif.GenerateMesh(-1))
@@ -705,7 +669,7 @@ namespace TS
                         gobj.transform.localScale = scale;
 
                         var resource = pathedInterior.GetField("interiorResource");
-                        var difPath = ResolvePath(resource, MissionPath);
+                        var difPath = ResolvePath(resource, MissionInfo.instance.MissionPath);
 
                         var dif = gobj.GetComponent<Dif>();
                         dif.filePath = difPath;
@@ -812,10 +776,51 @@ namespace TS
             }
 
             globalMarble.GetComponent<Movement>().GenerateMeshData();
-            GameManager.instance.InitGemCount();
 
-            Marble.onRespawn?.Invoke();
+            Time.timeScale = 1f;
+            GameManager.instance.InitGemCount();                       
+            Marble.onRespawn?.Invoke(); 
+            GameManager.instance.PlayLevelMusic();
         }
+
+        int CountInstantiations(TSObject mission)
+        {
+            int count = 0;
+
+            foreach (var obj in mission.RecursiveChildren())
+            {
+                // Mission info
+                if (obj.ClassName == "ScriptObject" && obj.Name == "MissionInfo")
+                    count++;
+
+                // Items
+                else if (obj.ClassName == "Item")
+                    count++;
+
+                // Interiors
+                else if (obj.ClassName == "InteriorInstance")
+                    count++;
+
+                // Shapes
+                else if (obj.ClassName == "StaticShape")
+                    count++;
+
+                // Triggers
+                else if (obj.ClassName == "Trigger")
+                    count++;
+
+                // Moving platforms (only if PathedInterior exists)
+                else if (obj.ClassName == "SimGroup" &&
+                         obj.RecursiveChildren().Any(o => o.ClassName == "PathedInterior"))
+                    count++;
+            }
+
+            // Finalization
+            count += 3;
+
+            return Mathf.Max(1, count);
+        }
+
 
 #if UNITY_EDITOR
         public void ImportMissionInEditor()
@@ -913,7 +918,7 @@ namespace TS
             }
         }
 
-        TSObject ProcessObject(TSParser.Object_declContext objectDecl)
+        public static TSObject ProcessObject(TSParser.Object_declContext objectDecl)
         {
             var obj = ScriptableObject.CreateInstance<TSObject>();
 

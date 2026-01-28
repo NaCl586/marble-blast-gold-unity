@@ -53,8 +53,14 @@ public class FrictionManager : MonoBehaviour
 
         movement.staticFriction = m_staticFriction;
         movement.kineticFriction = m_kineticFriction;
-        movement.bounceRestitution = m_restitution;
         movement.bounce = m_bounce;
+
+        if (GameManager.instance.shockAbsorberIsActive)
+            movement.bounceRestitution = 0f;
+        else if (GameManager.instance.superBounceIsActive)
+            movement.bounceRestitution = 1f;
+        else
+            movement.bounceRestitution = m_restitution;
 
         defaultPhysicMaterial.staticFriction = 0.7f;
         defaultPhysicMaterial.dynamicFriction = 1.1f;

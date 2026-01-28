@@ -11,9 +11,11 @@ public class ButtonSound : MonoBehaviour
     public bool isToggle = false;
     public AudioClip hoverFx;
     public AudioClip clickFx;
+    Button b;
 
     void Start()
     {
+        b = GetComponent<Button>();
         buttonFx = this.GetComponent<AudioSource>();
 
         if (buttonFx.gameObject.GetComponent<Button>())
@@ -22,10 +24,12 @@ public class ButtonSound : MonoBehaviour
 
     public void HoverSound()
     {
+        if (!b.IsInteractable()) return;
         if (enableSound || isToggle) buttonFx.PlayOneShot(hoverFx);
     }
     public void ClickSound()
     {
+        if (!b.IsInteractable()) return;
         if (enableSound || isToggle) buttonFx.PlayOneShot(clickFx);
     }
 }

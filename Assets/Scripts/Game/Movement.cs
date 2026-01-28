@@ -58,10 +58,21 @@ public class Movement : MonoBehaviour
 	public Texture collidedTexture;
 
 	private float marbleRadius;
-	private Vector2 inputMovement => new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")) + fakeInput;
+	private Vector2 inputMovement()
+    {
+		Vector2 movement = fakeInput;
+
+		if (Input.GetKey(ControlBinding.instance.moveForward)) movement.y = 1f;
+		if (Input.GetKey(ControlBinding.instance.moveBackward)) movement.y = -1f;
+		if (Input.GetKey(ControlBinding.instance.moveRight)) movement.x = 1f;
+		if (Input.GetKey(ControlBinding.instance.moveLeft)) movement.x = -1f;
+
+		return movement;
+	}
+
 	private Vector2 fakeInput = Vector2.zero;
 
-	private bool Jump => Input.GetButton("Jump");
+	private bool Jump => Input.GetKey(ControlBinding.instance.jump);
 
 	private Vector3 forwards = Vector3.forward;
 
@@ -563,7 +574,7 @@ public class Movement : MonoBehaviour
 		float _topX = Vector3.Dot(_topVelocity, sideDir);
 
 		// Input movement (camera-relative now)
-		Vector2 _move = inputMovement;
+		Vector2 _move = inputMovement();
 		float _moveY = maxRollVelocity * _move.y;
 		float _moveX = maxRollVelocity * _move.x;
 
@@ -617,7 +628,7 @@ public class Movement : MonoBehaviour
 		if (contacts.Count == 0)
 		{
 			GetMarbleAxis(out var _sideDir, out var _motionDir, out Vector3 _);
-			_force += (_sideDir * inputMovement.x + _motionDir * inputMovement.y) * airAcceleration;
+			_force += (_sideDir * inputMovement().x + _motionDir * inputMovement().y) * airAcceleration;
 		}
 
 		return _force;
@@ -793,9 +804,10 @@ public class Movement : MonoBehaviour
 			slipAmount = 0f;
 		}
 
+		//bouncy floor
 		if (contacts.Count > 0 && bounce > 0)
         {
-			Vector3 n = GetComponent<CheckCollision>().normal.normalized;
+			Vector3 n = contacts[0].normal.normalized;
 
 			// component of velocity along the normal
 			float normalComponent = Vector3.Dot(marbleVelocity, n);

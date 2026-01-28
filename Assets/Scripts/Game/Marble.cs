@@ -61,7 +61,7 @@ public class Marble : MonoBehaviour
                 GameManager.instance.RestartLevel();
         }
 
-        if (Input.GetKeyDown(KeyCode.Mouse0) && !GameManager.isPaused && !GameManager.gameFinish)
+        if (Input.GetKeyDown(ControlBinding.instance.usePowerup) && !GameManager.isPaused && !GameManager.gameFinish)
             UsePowerup();
     }
 
@@ -235,11 +235,11 @@ public class Marble : MonoBehaviour
         {
             var effect = Instantiate(bounceParticle);
             effect.transform.position = transform.position;
+            effect.transform.up = _collisionInfo.normal.normalized;
 
             effect.transform.parent = _collisionInfo.collider.transform;
 
             effect.transform.localScale = Vector3.one;
-            effect.transform.up = _collisionInfo.normal.normalized;
 
             Destroy(effect.gameObject, effect.GetComponent<ParticleSystem>().main.duration + 1f);
         }

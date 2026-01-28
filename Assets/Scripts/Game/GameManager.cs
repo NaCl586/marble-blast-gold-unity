@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -18,17 +19,6 @@ public class GameManager : MonoBehaviour
 
         Marble.onRespawn.AddListener(Respawn);
     }
-
-    [Header("Mission Info")]
-    public int time;
-    public string missionName;
-    public string levelName;
-    [TextArea(2, 10)] public string description;
-    [TextArea(2, 10)] public string startHelpText;
-    public int level;
-    public string artist;
-    public int goldTime;
-    public int ultimateTime;
 
     [Header("Level Objects")]
     public GameObject startPad;
@@ -56,6 +46,19 @@ public class GameManager : MonoBehaviour
     public void PlayHelpAudio() => audioSource.PlayOneShot(puHelp);
     public void PlayMissingGemAudio() => audioSource.PlayOneShot(puMissingGems);
     public void PlayAudioClip(AudioClip _ac) => audioSource.PlayOneShot(_ac);
+
+    [Space]
+    [Header("Level Music")]
+    [SerializeField] AudioSource levelMusic;
+
+    public void PlayLevelMusic()
+    {
+        if (MenuMusic.instance)
+            Destroy(MenuMusic.instance.gameObject);
+
+        LevelMusic.instance.SetMusic(MissionInfo.instance.level);
+        levelMusic.Play();
+    }
 
     [Space]
     [Header("UI Menu")]
@@ -329,7 +332,7 @@ public class GameManager : MonoBehaviour
             mp.ResetMP();
 
         GameUIManager.instance.SetTimerText(elapsedTime);
-        GameUIManager.instance.SetCenterText(startHelpText);
+        GameUIManager.instance.SetCenterText(MissionInfo.instance.startHelpText);
 
         if (finishParticleInstance)
             Destroy(finishParticleInstance);
@@ -408,7 +411,7 @@ public class GameManager : MonoBehaviour
 #region UI
     public void ReturnToMenu()
     {
-
+        SceneManager.LoadScene("PlayMission");
     }
 
     public void ShowFinishUI()
@@ -423,6 +426,8 @@ public class GameManager : MonoBehaviour
     public void UpdateName(string s)
     {
         bestTimeName = s;
+        PlayerPrefs.SetString("HighScoreName", s);
+        MissionInfo.instance.highScoreName = s;
     }
 
     public void CloseEnterNameWindow()
@@ -440,9 +445,8 @@ public class GameManager : MonoBehaviour
         replayButton.interactable = true;
         continueButton.interactable = true;
 
-
-        bool gold = elapsedTime < goldTime;
-        bool qualify = !(time != -1 && elapsedTime >= time);
+        bool gold = elapsedTime < MissionInfo.instance.goldTime;
+        bool qualify = !(MissionInfo.instance.time != -1 && elapsedTime >= MissionInfo.instance.time);
         finalTime.text = Utils.FormatTime(elapsedTime);
 
         int pos = DeterminePosition(elapsedTime);
@@ -457,6 +461,9 @@ public class GameManager : MonoBehaviour
                 enterNameCaption.text = "You got the 2nd best time!";
             else if (pos == 2)
                 enterNameCaption.text = "You got the 3rd best time!";
+
+            nameInputField.SetTextWithoutNotify(MissionInfo.instance.highScoreName);
+            UpdateName(MissionInfo.instance.highScoreName);
         }
 
         if (gold && qualify)
@@ -468,11 +475,11 @@ public class GameManager : MonoBehaviour
 
         string _qualifyTime, _goldTime;
         if (!qualify)
-            _qualifyTime = "<color=red>" + Utils.FormatTime(time) + "</color>";
+            _qualifyTime = "<color=red>" + Utils.FormatTime(MissionInfo.instance.time) + "</color>";
         else
-            _qualifyTime = Utils.FormatTime(time);
+            _qualifyTime = Utils.FormatTime(MissionInfo.instance.time);
 
-        _goldTime = "<color=yellow>" + Utils.FormatTime(goldTime) + "</color>";
+        _goldTime = "<color=yellow>" + Utils.FormatTime(MissionInfo.instance.goldTime) + "</color>";
 
         rightCaption.text = _qualifyTime + "\n" +
                             _goldTime + "\n" +
@@ -480,6 +487,12 @@ public class GameManager : MonoBehaviour
                             Utils.FormatTime(bonusTime);
 
         UpdateBestTimes();
+
+        int qualifiedLevel = PlayerPrefs.GetInt("QualifiedLevel" + PlayMissionManager.CapitalizeFirst(PlayMissionManager.currentlySelectedType.ToString()), 0);
+        if (qualify && qualifiedLevel + 1 == MissionInfo.instance.level)
+            PlayerPrefs.SetInt("QualifiedLevel" + PlayMissionManager.CapitalizeFirst(PlayMissionManager.currentlySelectedType.ToString()), (qualifiedLevel + 1));
+
+        PlayerPrefs.SetInt("SelectedLevel" + PlayMissionManager.CapitalizeFirst(PlayMissionManager.currentlySelectedType.ToString()), (MissionInfo.instance.level));
     }
 
     void UpdateBestTimes()
@@ -489,11 +502,11 @@ public class GameManager : MonoBehaviour
 
         for (int i = 0; i < 3; i++)
         {
-            string _name = PlayerPrefs.GetString(levelName + "_Name_" + i, "Nardo Polo");
-            float _time = PlayerPrefs.GetFloat(levelName + "_Time_" + i, -1);
+            string _name = PlayerPrefs.GetString(MissionInfo.instance.levelName + "_Name_" + i, "Nardo Polo");
+            float _time = PlayerPrefs.GetFloat(MissionInfo.instance.levelName + "_Time_" + i, -1);
             namesCaption.text += _name + "\n";
 
-            if (_time < goldTime && _time != -1)
+            if (_time < MissionInfo.instance.goldTime && _time != -1)
                 timesCaption.text += "<color=yellow>" + Utils.FormatTime(_time) + "</color>" + "\n";
             else
                 timesCaption.text += Utils.FormatTime(_time) + "\n";
@@ -504,7 +517,7 @@ public class GameManager : MonoBehaviour
     {
         float[] times = new float[3];
         for (int i = 0; i < 3; i++)
-            times[i] = PlayerPrefs.GetFloat(levelName + "_Time_" + i, -1);
+            times[i] = PlayerPrefs.GetFloat(MissionInfo.instance.levelName + "_Time_" + i, -1);
 
         if (times[0] == -1 || time < times[0]) return 0;
         else if (times[1] == -1 || (time < times[1] && time >= times[0])) return 1;
@@ -519,14 +532,14 @@ public class GameManager : MonoBehaviour
 
         for (int i = 1; i >= pos; i--)
         {
-            string playerName = PlayerPrefs.GetString(levelName + "_Name_" + i, "Nardo Polo");
-            float playerTime = PlayerPrefs.GetFloat(levelName + "_Time_" + i, -1);
-            PlayerPrefs.SetString(levelName + "_Name_" + (i + 1), playerName);
-            PlayerPrefs.SetFloat(levelName + "_Time_" + (i + 1), playerTime);
+            string playerName = PlayerPrefs.GetString(MissionInfo.instance.levelName + "_Name_" + i, "Nardo Polo");
+            float playerTime = PlayerPrefs.GetFloat(MissionInfo.instance.levelName + "_Time_" + i, -1);
+            PlayerPrefs.SetString(MissionInfo.instance.levelName + "_Name_" + (i + 1), playerName);
+            PlayerPrefs.SetFloat(MissionInfo.instance.levelName + "_Time_" + (i + 1), playerTime);
         }
 
-        PlayerPrefs.SetString(levelName + "_Name_" + pos, _name);
-        PlayerPrefs.SetFloat(levelName + "_Time_" + pos, _time);
+        PlayerPrefs.SetString(MissionInfo.instance.levelName + "_Name_" + pos, _name);
+        PlayerPrefs.SetFloat(MissionInfo.instance.levelName + "_Time_" + pos, _time);
     }
     #endregion
 }

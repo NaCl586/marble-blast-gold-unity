@@ -55,7 +55,7 @@ public class Powerups : MonoBehaviour
             Deactivate();
 
             if(showHelpOnPickup)
-                GameUIManager.instance.SetCenterText("Press the Left Mouse Button to use the " + powerupName);
+                GameUIManager.instance.SetCenterText("Press the <func:bind mouseFire> to use the " + powerupName);
 
             if (autoUse)
             {

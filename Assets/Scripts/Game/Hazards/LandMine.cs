@@ -31,10 +31,19 @@ public class LandMine : MonoBehaviour
         }
     }
 
-    public void CollisionEnter()
+    public void OnCollisionEnter(Collision collision)
+    {
+        Movement movement = null;
+        if (collision.gameObject.TryGetComponent<Movement>(out movement))
+        {
+            CollisionEnter(collision.gameObject, movement);
+        }
+    }
+
+    public void CollisionEnter(GameObject marble, Movement m)
     {
         // Positions
-        Vector3 vec = Marble.instance.transform.position - transform.position;
+        Vector3 vec = marble.transform.position - transform.position;
 
         // Explosion force
         float distance = vec.magnitude;
@@ -43,7 +52,7 @@ public class LandMine : MonoBehaviour
         if (distance > 0.0001f)
         {
             Vector3 dir = vec.normalized;
-            Movement.instance.marbleVelocity += dir * explosionStrength;
+            m.marbleVelocity += dir * explosionStrength;
         }
 
         var effect = Instantiate(explosionParticle);
@@ -53,8 +62,8 @@ public class LandMine : MonoBehaviour
 
         Vector3 pos = transform.position;
 
-        Vector3 inheritedVel = Movement.instance != null
-            ? Movement.instance.marbleVelocity
+        Vector3 inheritedVel = m != null
+            ? m.marbleVelocity
             : Vector3.zero;
 
         audioSource.PlayOneShot(explodeSfx);

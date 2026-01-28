@@ -101,8 +101,23 @@ public class CameraController : MonoBehaviour
     {
         if (!GameManager.gameFinish && Time.timeScale > 0.01f)
         {
-            mouseX = Input.GetAxis("Mouse X");
-            mouseY = Input.GetAxis("Mouse Y");
+            int invert = ControlBinding.instance.invertMouseYAxis ? -1 : 1;
+
+            mouseX = Input.GetAxis("Mouse X") * ControlBinding.instance.mouseSensitivity;
+
+            bool alwaysFreeLook = ControlBinding.instance.alwaysFreeLook;
+
+            if (!alwaysFreeLook && Input.GetKey(ControlBinding.instance.freelookKey))
+                mouseY = Input.GetAxis("Mouse Y") * ControlBinding.instance.mouseSensitivity * invert;
+            else if (alwaysFreeLook)
+                mouseY = Input.GetAxis("Mouse Y") * ControlBinding.instance.mouseSensitivity * invert;
+            else
+                mouseY = 0f;
+
+            if (Input.GetKey(ControlBinding.instance.rotateCameraRight) || Input.GetKeyDown(ControlBinding.instance.rotateCameraRight)) mouseX += Time.deltaTime * 0.25f * 90;
+            if (Input.GetKey(ControlBinding.instance.rotateCameraLeft) || Input.GetKeyDown(ControlBinding.instance.rotateCameraLeft)) mouseX -= Time.deltaTime * 0.25f * 90;
+            if (Input.GetKey(ControlBinding.instance.rotateCameraUp) || Input.GetKeyDown(ControlBinding.instance.rotateCameraUp)) mouseY += Time.deltaTime * 0.25f * 90;
+            if (Input.GetKey(ControlBinding.instance.rotateCameraDown) || Input.GetKeyDown(ControlBinding.instance.rotateCameraDown)) mouseY -= Time.deltaTime * 0.25f * 90;
         }
         else if (GameManager.gameFinish)
         {

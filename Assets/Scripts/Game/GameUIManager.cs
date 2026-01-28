@@ -79,6 +79,9 @@ public class GameUIManager : MonoBehaviour
     public void SetCenterText(string _text)
     {
         centerTextFade?.Kill();
+
+        _text = Utils.Resolve(_text);
+
         centerText.color = Color.white;
         centerText.text = _text;
         centerTextFade = centerText.DOColor(Color.white, 3f).OnComplete(() => { centerText.DOColor(Color.clear, 0.25f); });
@@ -87,6 +90,9 @@ public class GameUIManager : MonoBehaviour
     public void SetBottomText(string _text)
     {
         bottomTextFade?.Kill();
+
+        _text = Utils.Resolve(_text);
+
         bottomText.color = Color.yellow;
         bottomText.text = _text;
         bottomTextFade = bottomText.DOColor(Color.yellow, 3f).OnComplete(() => { bottomText.DOColor(Color.clear, 0.25f); });
