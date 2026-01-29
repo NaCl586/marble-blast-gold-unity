@@ -436,11 +436,18 @@ public class OptionsManager : MonoBehaviour
                     }
                     else
                     {
-                        tempKeycode = key;
-                        remapMenu.SetActive(false);
-                        confirmMenu.SetActive(true);
-                        confirmMenu.transform.SetAsLastSibling();
-                        confirmCaption.text = "\"" + Utils.KeyCodeToString(key) + "\" is already bound to \"" + conflictedMapping +"\"!\nDo you want to undo this mapping ?";
+                        if(bindToBeRemapped == conflictedMapping)
+                        {
+                            remapMenu.SetActive(false);
+                        }
+                        else
+                        {
+                            tempKeycode = key;
+                            remapMenu.SetActive(false);
+                            confirmMenu.SetActive(true);
+                            confirmMenu.transform.SetAsLastSibling();
+                            confirmCaption.text = "\"" + Utils.KeyCodeToString(key) + "\" is already bound to \"" + conflictedMapping + "\"!\nDo you want to undo this mapping ?";
+                        }
                     }
                     break;
                 }
