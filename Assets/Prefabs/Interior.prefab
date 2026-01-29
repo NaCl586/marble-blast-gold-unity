@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 6653497135140199398}
   - component: {fileID: 5150235950304121508}
   - component: {fileID: 8488351180778771342}
+  - component: {fileID: -8092672860633671546}
   m_Layer: 0
   m_Name: Interior
   m_TagString: Untagged
@@ -49,8 +50,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   filePath: 
   DefaultMaterial: {fileID: 2100000, guid: 3ad662118ff794fed9fcbf828afdca2c, type: 2}
-  ClickToGenerate: 0
-  ClickToCreateObj: 0
+  maxTrianglesPerChunk: 1000
 --- !u!64 &6653497135140199398
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -123,3 +123,17 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &-8092672860633671546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6653497135140199419}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e5d70c56fa3704449355bb857d6116b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  marble: {fileID: 0}
+  activeRadius: 15

@@ -12,7 +12,6 @@ namespace TS
 {
     public class MissionImporter : MonoBehaviour
     {
-        [SerializeField] private bool debugImportProgress = true;
         public List<TSObject> MissionObjects;
 
         [Header("Prefabs")]
@@ -297,10 +296,9 @@ namespace TS
                     var difPath = ResolvePath(obj.GetField("interiorFile"), MissionInfo.instance.MissionPath);
                     var dif = gobj.GetComponent<Dif>();
                     dif.filePath = difPath;
+
                     if (!dif.GenerateMesh(-1))
-                    {
                         Destroy(gobj.gameObject);
-                    }
                 }
 
                 //Shapes

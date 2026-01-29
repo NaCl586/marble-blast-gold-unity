@@ -17,11 +17,14 @@ public class Dif : MonoBehaviour {
 	public string filePath;
 	public Material DefaultMaterial;
 
+    [Header("Collision / Chunking")]
+    public int maxTrianglesPerChunk = 1500;
+
     public bool GenerateMesh(int interiorIndex)
     {
         // Ensure MeshFilter and MeshRenderer exist
-        var meshFilter = gameObject.GetComponent<MeshFilter>() ?? gameObject.AddComponent<MeshFilter>();
-        var meshRenderer = gameObject.GetComponent<MeshRenderer>() ?? gameObject.AddComponent<MeshRenderer>();
+        var meshFilter = gameObject.GetComponent<MeshFilter>();
+        var meshRenderer = gameObject.GetComponent<MeshRenderer>();
 
         // Load DIF resource
         var resource = DifResourceManager.getResource(Path.Combine(Application.streamingAssetsPath, filePath), interiorIndex);
@@ -81,21 +84,62 @@ public class Dif : MonoBehaviour {
         renderMesh.RecalculateBounds();
         meshFilter.mesh = renderMesh;
 
-        // --- Physics Mesh (collider) ---
-        Mesh physicsMesh = new Mesh();
-        physicsMesh.vertices = renderMesh.vertices;
-        physicsMesh.triangles = renderMesh.triangles;
+        // ---------------- PHYSICS COLLISION (FINAL) ----------------
 
-        physicsMesh = WeldPhysicsMesh(physicsMesh, 0.0001f);
-        physicsMesh = FlatShadePhysicsMesh(physicsMesh);
+        // Remove any old colliders
+        foreach (var c in GetComponents<MeshCollider>())
+            DestroyImmediate(c);
 
-        physicsMesh.RecalculateNormals();
-        physicsMesh.RecalculateTangents();
-        physicsMesh.RecalculateBounds();
+        int chunkIndex = 0;
 
-        var meshCollider = gameObject.GetComponent<MeshCollider>() ?? gameObject.AddComponent<MeshCollider>();
-        meshCollider.sharedMesh = physicsMesh;
-        meshCollider.convex = false;
+        List<int> triangleBuffer = new List<int>(maxTrianglesPerChunk * 3);
+
+        for (int mat = 0; mat < resource.triangleIndices.Length; mat++)
+        {
+            int[] tris = resource.triangleIndices[mat];
+            if (tris == null || tris.Length == 0)
+                continue;
+
+            string matName = resource.materials[mat];
+
+            // OPTIONAL: skip decorative geometry
+            // if (IsDecorativeMaterial(matName))
+            //     continue;
+
+            for (int i = 0; i < tris.Length; i += 3)
+            {
+                // Add one triangle (3 indices)
+                triangleBuffer.Add(tris[i]);
+                triangleBuffer.Add(tris[i + 1]);
+                triangleBuffer.Add(tris[i + 2]);
+
+                // If chunk is full → emit GameObject
+                if (triangleBuffer.Count >= maxTrianglesPerChunk * 3)
+                {
+                    CreateChunk(
+                        chunkIndex++,
+                        triangleBuffer.ToArray(),
+                        torqueToUnity,
+                        resource
+                    );
+
+                    triangleBuffer.Clear();
+                }
+            }
+        }
+
+        // Flush remainder
+        if (triangleBuffer.Count > 0)
+        {
+            CreateChunk(
+                chunkIndex++,
+                triangleBuffer.ToArray(),
+                torqueToUnity,
+                resource
+            );
+        }
+
+
 
         // --- Materials ---
         Material[] materials = new Material[resource.triangleIndices.Length];
@@ -118,6 +162,98 @@ public class Dif : MonoBehaviour {
 
         return true;
     }
+
+    void CreateChunk(
+    int index,
+    int[] tris,
+    Quaternion torqueToUnity,
+    DifResource resource
+)
+    {
+        GameObject chunk = new GameObject($"DIF_Chunk_{index}");
+        chunk.transform.SetParent(transform, false);
+        chunk.isStatic = true;
+
+        // --- Build render mesh ---
+        Mesh mesh = new Mesh();
+        mesh.name = $"DIF_Mesh_{index}";
+
+        mesh.vertices = resource.vertices
+            .Select(v => torqueToUnity * new Vector3(v.x, -v.y, v.z))
+            .ToArray();
+
+        mesh.normals = resource.normals
+            .Select(n => torqueToUnity * new Vector3(n.x, -n.y, n.z))
+            .ToArray();
+
+        mesh.uv = resource.uvs;
+        mesh.triangles = tris;
+        mesh.RecalculateBounds();
+
+        var mf = chunk.AddComponent<MeshFilter>();
+        var mr = chunk.AddComponent<MeshRenderer>();
+
+        mf.sharedMesh = mesh;
+
+        // --- Physics mesh ---
+        Mesh physicsMesh = Instantiate(mesh);
+        physicsMesh = WeldPhysicsMesh(physicsMesh, 0.01f);
+        physicsMesh = RemoveTinyTriangles(physicsMesh, 0.0005f);
+        physicsMesh.RecalculateNormals();
+        physicsMesh.RecalculateBounds();
+
+        var mc = chunk.AddComponent<MeshCollider>();
+        mc.sharedMesh = physicsMesh;
+        mc.convex = false;
+    }
+
+
+    Material ResolveMaterial(string materialName)
+    {
+        if (string.IsNullOrEmpty(materialName))
+            return DefaultMaterial;
+
+        var mat = Instantiate(DefaultMaterial);
+        mat.name = materialName;
+
+        string texPath = ResolveTexturePath(materialName);
+        if (File.Exists(texPath))
+        {
+            var tex = new Texture2D(2, 2);
+            tex.LoadImage(File.ReadAllBytes(texPath));
+            mat.mainTexture = tex;
+        }
+
+        return mat;
+    }
+
+
+    Mesh RemoveTinyTriangles(Mesh mesh, float minArea)
+    {
+        var verts = mesh.vertices;
+        var tris = mesh.triangles;
+
+        var newTris = new List<int>(tris.Length);
+
+        for (int i = 0; i < tris.Length; i += 3)
+        {
+            Vector3 a = verts[tris[i]];
+            Vector3 b = verts[tris[i + 1]];
+            Vector3 c = verts[tris[i + 2]];
+
+            float area = Vector3.Cross(b - a, c - a).magnitude * 0.5f;
+            if (area >= minArea)
+            {
+                newTris.Add(tris[i]);
+                newTris.Add(tris[i + 1]);
+                newTris.Add(tris[i + 2]);
+            }
+        }
+
+        mesh.triangles = newTris.ToArray();
+        return mesh;
+    }
+
 
     // Weld by position only (for physics mesh)
     private Mesh WeldPhysicsMesh(Mesh mesh, float tolerance)

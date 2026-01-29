@@ -1180,7 +1180,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bec63c7e30a457f8c34d990a8eafdff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugImportProgress: 1
   MissionObjects:
   - {fileID: 319122957}
   interiorPrefab: {fileID: 6653497135140199419, guid: 3806fd2cf50ec474f88647ee66b42828,
@@ -2763,7 +2762,7 @@ PrefabInstance:
     - target: {fileID: 2900114141589439554, guid: a6f3b40817226a742b5103de061cdd10,
         type: 3}
       propertyPath: MissionPath
-      value: marble/data/missions/intermediate/forkinroad2.mis
+      value: marble/data/missions/intermediate/highroadlowroad.mis
       objectReference: {fileID: 0}
     - target: {fileID: 8324348759766913104, guid: a6f3b40817226a742b5103de061cdd10,
         type: 3}

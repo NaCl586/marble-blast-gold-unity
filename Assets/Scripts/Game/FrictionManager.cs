@@ -39,8 +39,8 @@ public class FrictionManager : MonoBehaviour
 
         currentFriction = null; // start with defaults
 
-        defaultPhysicMaterial.staticFriction = 0.7f;
-        defaultPhysicMaterial.dynamicFriction = 1.1f;
+        defaultPhysicMaterial.staticFriction = 1.1f;
+        defaultPhysicMaterial.dynamicFriction = 0.7f;
         defaultPhysicMaterial.bounciness = 1;
     }
 

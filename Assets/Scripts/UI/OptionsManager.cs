@@ -59,7 +59,7 @@ public class OptionsManager : MonoBehaviour
     public Button yesButton;
     public Button noButton;
 
-    Vector2 currentResolution, targetResolution;
+    int resolutionIndex;
     string colorMode, videoDriver;
     bool fullScreen, shadow;
     string bindToBeRemapped;
@@ -123,14 +123,12 @@ public class OptionsManager : MonoBehaviour
 
     public void SetDefaults()
     {
-        currentResolution = new Vector2(Screen.currentResolution.width, Screen.currentResolution.height);
-        if ((int)currentResolution.x == 1280 && (int)currentResolution.y == 720)
+        resolutionIndex = PlayerPrefs.GetInt("Graphics_ScreenResolution", 2);
+        if(resolutionIndex == 0)
             graf640.SetIsOnWithoutNotify(true);
-        else if ((int)currentResolution.x == 1366 && (int)currentResolution.y == 768) 
+        else if (resolutionIndex == 1) 
             graf800.SetIsOnWithoutNotify(true);
-        else if ((int)currentResolution.x == 1920 && (int)currentResolution.y == 1080) 
-            graf1024.SetIsOnWithoutNotify(true);
-        else 
+        else
             graf1024.SetIsOnWithoutNotify(true);
 
         fullScreen = PlayerPrefs.GetInt("Graphics_Fullscreen", 0) == 1;
@@ -204,7 +202,14 @@ public class OptionsManager : MonoBehaviour
     #region Graphics
     public void ApplyGraphics()
     {
-        Screen.SetResolution((int)targetResolution.x, (int)targetResolution.y, fullScreen);
+        if (resolutionIndex == 0)
+            Screen.SetResolution(1280, 720, fullScreen);
+        else if (resolutionIndex == 1)
+            Screen.SetResolution(1366, 769, fullScreen);
+        else
+            Screen.SetResolution(1920, 1080, fullScreen);
+
+        PlayerPrefs.GetInt("Graphics_ScreenResolution", resolutionIndex);
         PlayerPrefs.SetInt("Graphics_Shadow", shadow ? 1 : 0);
 
         PlayerPrefs.SetInt("Graphics_Fullscreen", fullScreen ? 1 : 0);
@@ -226,7 +231,7 @@ public class OptionsManager : MonoBehaviour
         graf800.SetIsOnWithoutNotify(false);
         graf1024.SetIsOnWithoutNotify(false);
 
-        targetResolution = new Vector2(1280, 720);
+        resolutionIndex = 0;
     }
 
 
@@ -241,7 +246,7 @@ public class OptionsManager : MonoBehaviour
         graf640.SetIsOnWithoutNotify(false);
         graf1024.SetIsOnWithoutNotify(false);
 
-        targetResolution = new Vector2(1366, 768);
+        resolutionIndex = 1;
     }
 
 
@@ -256,7 +261,7 @@ public class OptionsManager : MonoBehaviour
         graf640.SetIsOnWithoutNotify(false);
         graf800.SetIsOnWithoutNotify(false);
 
-        targetResolution = new Vector2(1920, 1080);
+        resolutionIndex = 2;
     }
 
     public void SetVideoDriverOpenGL(bool isOn)

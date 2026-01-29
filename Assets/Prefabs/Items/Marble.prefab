@@ -569,6 +569,7 @@ MonoBehaviour:
   marbleVelocity: {x: 0, y: 0, z: 0}
   marbleAngularVelocity: {x: 0, y: 0, z: 0}
   collidedTexture: {fileID: 0}
+  defaultMaterial: {fileID: 13400000, guid: 9f602b3fd3a59419e8822de779a930ea, type: 2}
 --- !u!114 &2259544043996708080
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -621,8 +622,6 @@ MonoBehaviour:
   defaultPhysicMaterial: {fileID: 13400000, guid: 9f602b3fd3a59419e8822de779a930ea,
     type: 2}
   m_restitution: 0
-  movement: {fileID: 6222272426371884095}
-  checkCollision: {fileID: 5528955957562662288}
 --- !u!82 &3094592717009676412
 AudioSource:
   m_ObjectHideFlags: 0

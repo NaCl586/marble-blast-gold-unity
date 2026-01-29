@@ -52,21 +52,24 @@ public class Movement : MonoBehaviour
 	public float minBounceVel = 0.1f;
 	public float bounceRestitution = 0.5f;
 	public float bounce = 0;
-
+	[Space]
 	public Vector3 marbleVelocity;
 	public Vector3 marbleAngularVelocity;
 	public Texture collidedTexture;
+	[Space]
+	public PhysicMaterial defaultMaterial;
 
 	private float marbleRadius;
 	private Vector2 inputMovement()
-    {
+	{
 		Vector2 movement = fakeInput;
-
-		if (Input.GetKey(ControlBinding.instance.moveForward)) movement.y = 1f;
-		if (Input.GetKey(ControlBinding.instance.moveBackward)) movement.y = -1f;
-		if (Input.GetKey(ControlBinding.instance.moveRight)) movement.x = 1f;
-		if (Input.GetKey(ControlBinding.instance.moveLeft)) movement.x = -1f;
-
+		if (canSpin)
+        {
+			if (Input.GetKey(ControlBinding.instance.moveForward)) movement.y = 1f;
+			if (Input.GetKey(ControlBinding.instance.moveBackward)) movement.y = -1f;
+			if (Input.GetKey(ControlBinding.instance.moveRight)) movement.x = 1f;
+			if (Input.GetKey(ControlBinding.instance.moveLeft)) movement.x = -1f;
+		}
 		return movement;
 	}
 
@@ -124,8 +127,6 @@ public class Movement : MonoBehaviour
 
 	private bool hasPosition = false;
 
-	
-
 	public void SetPosition(Vector3 newPos)
 	{
 		hasPosition = true;
@@ -148,7 +149,7 @@ public class Movement : MonoBehaviour
 	public void StopMoving()
 	{
 		canMove = false;
-		canSpin = true;
+		canSpin = false;
 		canJump = false;
 	}
 
@@ -182,7 +183,7 @@ public class Movement : MonoBehaviour
 			transform.lossyScale.x,
 			transform.lossyScale.y,
 			transform.lossyScale.z
-		);
+		);	
 	}
 
 	public void GenerateMeshData()
@@ -191,8 +192,13 @@ public class Movement : MonoBehaviour
 		meshes = new List<MeshData>();
 
 		foreach (var item in FindObjectsOfType<MeshCollider>())
-			if(!item.isTrigger)
+        {
+			if (!item.isTrigger)
+            {
+				item.material = defaultMaterial;
 				colTests.Add(item);
+			}
+		}
 
 		foreach (var mesh in colTests)
 			GenerateMeshInfo(mesh);
@@ -272,18 +278,15 @@ public class Movement : MonoBehaviour
 		if (!freezeMovement)
 			transform.position = position;
 
-        if (canSpin)
-        {
-			Vector3 vector3 = marbleAngularVelocity;
-			float num1 = vector3.magnitude;
-			if (num1 <= 0.0000001f)
-				return;
+		Vector3 vector3 = marbleAngularVelocity;
+		float num1 = vector3.magnitude;
+		if (num1 <= 0.0000001f)
+			return;
 
-			Quaternion quaternion = Quaternion.AngleAxis(Time.fixedDeltaTime * num1 * Mathf.Rad2Deg, vector3 * (1f / num1));
-			quaternion.Normalize();
-			transform.rotation = quaternion * transform.rotation;
-			transform.rotation.Normalize();
-		}
+		Quaternion quaternion = Quaternion.AngleAxis(Time.fixedDeltaTime * num1 * Mathf.Rad2Deg, vector3 * (1f / num1));
+		quaternion.Normalize();
+		transform.rotation = quaternion * transform.rotation;
+		transform.rotation.Normalize();
 	}
 
 	List<CollisionInfo> FindContacts(Bounds bounds)
@@ -541,7 +544,7 @@ public class Movement : MonoBehaviour
 				break;
 			prevResolved = resolved;
 			it++;
-		} while (it < 10);
+		} while (it < 4);
 		return position;
 	}
 
