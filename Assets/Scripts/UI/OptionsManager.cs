@@ -439,6 +439,14 @@ public class OptionsManager : MonoBehaviour
                         if(bindToBeRemapped == conflictedMapping)
                         {
                             remapMenu.SetActive(false);
+
+                            bindToBeRemapped = string.Empty;
+                            conflictedButton = null;
+
+                            conflictedMapping = string.Empty;
+                            buttonToBeRemapped = null;
+
+                            Invoke(nameof(EnableButtons), 0.25f);
                         }
                         else
                         {
@@ -459,6 +467,9 @@ public class OptionsManager : MonoBehaviour
     {
         conflictedButton = null;
         conflictedMapping = string.Empty;
+
+        bindToBeRemapped = string.Empty;
+        conflictedButton = null;
 
         confirmMenu.SetActive(false);
 
