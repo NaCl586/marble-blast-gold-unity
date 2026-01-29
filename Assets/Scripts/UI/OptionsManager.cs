@@ -209,7 +209,7 @@ public class OptionsManager : MonoBehaviour
         else
             Screen.SetResolution(1920, 1080, fullScreen);
 
-        PlayerPrefs.GetInt("Graphics_ScreenResolution", resolutionIndex);
+        PlayerPrefs.SetInt("Graphics_ScreenResolution", resolutionIndex);
         PlayerPrefs.SetInt("Graphics_Shadow", shadow ? 1 : 0);
 
         PlayerPrefs.SetInt("Graphics_Fullscreen", fullScreen ? 1 : 0);
