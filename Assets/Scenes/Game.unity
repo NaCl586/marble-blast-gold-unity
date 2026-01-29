@@ -1090,6 +1090,19 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!114 &976207757
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 976207751}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53725a9e69f0fd248b1fa1f4908dbf01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetAspect: 1.7777778
 --- !u!114 &980619600
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1354,7 +1367,7 @@ ReflectionProbe:
   serializedVersion: 2
   m_Type: 0
   m_Mode: 1
-  m_RefreshMode: 1
+  m_RefreshMode: 2
   m_TimeSlicingMode: 0
   m_Resolution: 128
   m_UpdateFrequency: 0
@@ -2149,6 +2162,16 @@ PrefabInstance:
       propertyPath: m_TargetTexture
       value: 
       objectReference: {fileID: 8400000, guid: f21921ffe81057845995a7ddb4d72caa, type: 2}
+    - target: {fileID: 136209974850031513, guid: 3f1d3f3ef37264c33ab8a76e916ef291,
+        type: 3}
+      propertyPath: m_NormalizedViewPortRect.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 136209974850031513, guid: 3f1d3f3ef37264c33ab8a76e916ef291,
+        type: 3}
+      propertyPath: m_NormalizedViewPortRect.height
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 136209974850031515, guid: 3f1d3f3ef37264c33ab8a76e916ef291,
         type: 3}
       propertyPath: m_Name
@@ -2227,6 +2250,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 976207756}
+    - targetCorrespondingSourceObject: {fileID: 136209974850031515, guid: 3f1d3f3ef37264c33ab8a76e916ef291,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 976207757}
   m_SourcePrefab: {fileID: 100100000, guid: 3f1d3f3ef37264c33ab8a76e916ef291, type: 3}
 --- !u!1001 &178892578877145493
 PrefabInstance:
@@ -2704,7 +2731,7 @@ PrefabInstance:
     - target: {fileID: 2900114141589439554, guid: a6f3b40817226a742b5103de061cdd10,
         type: 3}
       propertyPath: MissionPath
-      value: marble/data/missions/beginner/finale.mis
+      value: marble/data/missions/advanced/kingofthemountain.mis
       objectReference: {fileID: 0}
     - target: {fileID: 8324348759766913104, guid: a6f3b40817226a742b5103de061cdd10,
         type: 3}

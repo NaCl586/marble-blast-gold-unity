@@ -243,7 +243,7 @@ public class Movement : MonoBehaviour
 		
 		float timeRemaining = Time.fixedDeltaTime;
 
-		const float STEP_SIZE = 0.004f;
+		const float STEP_SIZE = 0.008f;
 
 		oldPos = position;
 		prevRot = transform.rotation;
@@ -265,7 +265,7 @@ public class Movement : MonoBehaviour
 
 			it++;
 
-			if (timeStep == 0 || it > 10)
+			if (timeStep == 0 || it > 4)
 				break;
 		} while (true);
 
@@ -288,7 +288,7 @@ public class Movement : MonoBehaviour
 
 	List<CollisionInfo> FindContacts(Bounds bounds)
 	{
-		var _contacts = new List<CollisionInfo>();
+		contacts.Clear();
 		float _radius = marbleRadius + 0.0001f;
 
 		for (int _index = 0; _index < colTests.Count; _index++)
@@ -355,15 +355,18 @@ public class Movement : MonoBehaviour
 								velocity = colliderVelocity
 							};
 
-							_contacts.Add(newCollision);
+							contacts.Add(newCollision);
 							lastNormal = newCollision.normal;
+
+							if (contacts.Count >= 4)
+								break;
 						}
 					}
 				}
 			}
 		}
 
-		return _contacts;
+		return contacts;
 	}
 
 	private void AdvancePhysics(ref float _dt)
@@ -733,7 +736,7 @@ public class Movement : MonoBehaviour
 				foreach (var contact in contacts)
 					contact.velocity = Vector3.zero;
 			}
-		} while (!done && itersIn < 1e4); // Maximum limit pls
+		} while (!done && itersIn < 8); // Maximum limit pls
 		if (marbleVelocity.magnitude < 625.0)
 		{
 			var gotOne = false;
@@ -930,7 +933,7 @@ public class Movement : MonoBehaviour
 
 		// Fallback if camera is looking straight along gravity
 		if (movementVector.sqrMagnitude < 1e-6f)
-			movementVector = Vector3.ProjectOnPlane(Camera.main.transform.right, up);
+			movementVector = Vector3.ProjectOnPlane(Camera.main.transform.forward, up);
 
 		movementVector.Normalize();
 
@@ -1004,6 +1007,9 @@ public class Movement : MonoBehaviour
 
 		if (rollSound != null)
 			rollSound.pitch = pitch;
+
+		rollSound.volume = rollSound.volume * PlayerPrefs.GetFloat("Audio_SoundVolume", 0.5f);
+		slipSound.volume = slipSound.volume * PlayerPrefs.GetFloat("Audio_SoundVolume", 0.5f);
 	}
 
 	static class CollisionHelpers

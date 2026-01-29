@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Movement))]
 public class Marble : MonoBehaviour
@@ -49,7 +50,7 @@ public class Marble : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
         if (Input.GetKeyDown(KeyCode.R) && !GameManager.gameFinish)
         {
@@ -59,7 +60,10 @@ public class Marble : MonoBehaviour
                 GameManager.instance.RestartLevel();
         }
 
-        if (Input.GetKey(ControlBinding.instance.usePowerup) && !GameManager.isPaused && !GameManager.gameFinish && Movement.instance.canMove)
+        if (GameManager.isPaused && Input.GetKeyDown(KeyCode.Return))
+            SceneManager.LoadScene("PlayMission");
+
+        if (Input.GetKeyDown(ControlBinding.instance.usePowerup) && !GameManager.isPaused && !GameManager.gameFinish && Movement.instance.canMove)
             UsePowerup();
     }
 
@@ -71,6 +75,7 @@ public class Marble : MonoBehaviour
     void UsePowerup()
     {
         PowerupType powerUp = GameManager.instance.ConsumePowerup();
+
         if (powerUp == PowerupType.SuperJump)
             SuperJump.onUseSuperJump?.Invoke();
         if (powerUp == PowerupType.SuperSpeed)
@@ -114,7 +119,7 @@ public class Marble : MonoBehaviour
 
     public void PlayBounceSound(float volume)
     {
-        audioSource.volume = volume;
+        audioSource.volume = volume * PlayerPrefs.GetFloat("Audio_SoundVolume", 0.5f);
         audioSource.PlayOneShot(bounceSfx[Random.Range(0, bounceSfx.Length)]);
     }
 

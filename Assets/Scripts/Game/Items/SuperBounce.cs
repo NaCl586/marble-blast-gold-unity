@@ -18,6 +18,12 @@ public class SuperBounce : Powerups
         }
     }
 
+    public void OnDisable()
+    {
+        alreadyListened = false;
+        onUseSuperBounce.RemoveAllListeners();
+    }
+
     protected override void UsePowerup()
     {
         Marble.instance.StopSound(PowerupType.ShockAbsorber);

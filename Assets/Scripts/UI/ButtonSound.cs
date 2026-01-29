@@ -1,35 +1,83 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(AudioSource))]
 public class ButtonSound : MonoBehaviour
 {
-    [HideInInspector] public AudioSource buttonFx;
-    [HideInInspector] public bool enableSound;
-    public bool isToggle = false;
+    AudioSource buttonFx;
+
+    Button button;
+    Toggle toggle;
+
     public AudioClip hoverFx;
     public AudioClip clickFx;
-    Button b;
 
-    void Start()
+    [Tooltip("For toggles: play sound only when toggled ON")]
+    public bool playToggleOnOnly = false;
+
+    void Awake()
     {
-        b = GetComponent<Button>();
-        buttonFx = this.GetComponent<AudioSource>();
+        button = GetComponent<Button>();
+        toggle = GetComponent<Toggle>();
 
-        if (buttonFx.gameObject.GetComponent<Button>())
-            enableSound = buttonFx.gameObject.GetComponent<Button>().interactable;
+        if (button)
+        {
+            button.onClick.AddListener(PlayClickSound);
+        }
+
+        if (toggle)
+        {
+            toggle.onValueChanged.AddListener(OnToggleChanged);
+        }
     }
 
+    void OnDestroy()
+    {
+        if (button)
+            button.onClick.RemoveListener(PlayClickSound);
+
+        if (toggle)
+            toggle.onValueChanged.RemoveListener(OnToggleChanged);
+    }
+
+    // --- Hover (called from EventTrigger or IPointerEnter) ---
     public void HoverSound()
     {
-        if (!b.IsInteractable()) return;
-        if (enableSound || isToggle) buttonFx.PlayOneShot(hoverFx);
+        if (!IsInteractable()) return;
+
+        buttonFx = GetComponent<AudioSource>();
+        buttonFx.volume = PlayerPrefs.GetFloat("Audio_SoundVolume", 0.5f);
+
+        if (hoverFx) buttonFx.PlayOneShot(hoverFx);
     }
-    public void ClickSound()
+
+    // --- Button click ---
+    void PlayClickSound()
     {
-        if (!b.IsInteractable()) return;
-        if (enableSound || isToggle) buttonFx.PlayOneShot(clickFx);
+        if (!IsInteractable()) return;
+
+        buttonFx = GetComponent<AudioSource>();
+        buttonFx.volume = PlayerPrefs.GetFloat("Audio_SoundVolume", 0.5f);
+
+        if (clickFx) buttonFx.PlayOneShot(clickFx);
+    }
+
+    // --- Toggle click ---
+    void OnToggleChanged(bool isOn)
+    {
+        if (!IsInteractable()) return;
+
+        if (playToggleOnOnly && !isOn)
+            return;
+
+        buttonFx = GetComponent<AudioSource>();
+        if (clickFx) buttonFx.PlayOneShot(clickFx);
+    }
+
+    bool IsInteractable()
+    {
+        if (button) return button.interactable;
+        if (toggle) return toggle.interactable;
+        return false;
     }
 }

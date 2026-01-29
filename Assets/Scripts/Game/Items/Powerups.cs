@@ -71,7 +71,6 @@ public class Powerups : MonoBehaviour
 
     protected void FixedUpdate()
     {
-        
         if (rotateMesh)
         {
             var rot = transform.Find("Mesh").rotation;

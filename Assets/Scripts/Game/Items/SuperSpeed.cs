@@ -24,6 +24,12 @@ public class SuperSpeed : Powerups
         }
     }
 
+    public void OnDisable()
+    {
+        alreadyListened = false;
+        onUseSuperSpeed.RemoveAllListeners();
+    }
+
     void FixedUpdate()
     {
         base.FixedUpdate();

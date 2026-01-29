@@ -24,6 +24,12 @@ public class SuperJump : Powerups
         }
     }
 
+    public void OnDisable()
+    {
+        alreadyListened = false;
+        onUseSuperJump.RemoveAllListeners();
+    }
+
     void FixedUpdate()
     {
         base.FixedUpdate();

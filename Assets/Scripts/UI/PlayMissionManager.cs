@@ -65,6 +65,7 @@ public class PlayMissionManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.LeftArrow)) PrevButton();
         if (Input.GetKeyDown(KeyCode.RightArrow)) NextButton();
+        if (Input.GetKeyDown(KeyCode.Escape)) SceneManager.LoadScene("MainMenu");
     }
 
     public void Start()
@@ -76,6 +77,8 @@ public class PlayMissionManager : MonoBehaviour
     {
         while (MissionInfo.instance.missionsBeginner == null || MissionInfo.instance.missionsBeginner.Count == 0)
             yield return null;
+
+        Time.timeScale = 1;
 
         beginnerButton.GetComponent<Button>().onClick.AddListener(() => LoadMissions(Type.beginner));
         intermediateButton.GetComponent<Button>().onClick.AddListener(() => LoadMissions(Type.intermediate));

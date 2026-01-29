@@ -780,50 +780,17 @@ namespace TS
             globalMarble.GetComponent<Movement>().GenerateMeshData();
 
             Time.timeScale = 1f;
-            GameManager.instance.InitGemCount();   
+            GameManager.instance.InitGemCount();
+
+            GameManager.instance.SetSoundVolumes();
             GameManager.instance.PlayLevelMusic();
+
+            directionalLight.GetComponent<Light>().shadows = PlayerPrefs.GetInt("Graphics_Shadow", 1) == 1 ? LightShadows.Soft : LightShadows.None;
+
             Marble.onRespawn?.Invoke();
         }
 
-        int CountInstantiations(TSObject mission)
-        {
-            int count = 0;
-
-            foreach (var obj in mission.RecursiveChildren())
-            {
-                // Mission info
-                if (obj.ClassName == "ScriptObject" && obj.Name == "MissionInfo")
-                    count++;
-
-                // Items
-                else if (obj.ClassName == "Item")
-                    count++;
-
-                // Interiors
-                else if (obj.ClassName == "InteriorInstance")
-                    count++;
-
-                // Shapes
-                else if (obj.ClassName == "StaticShape")
-                    count++;
-
-                // Triggers
-                else if (obj.ClassName == "Trigger")
-                    count++;
-
-                // Moving platforms (only if PathedInterior exists)
-                else if (obj.ClassName == "SimGroup" &&
-                         obj.RecursiveChildren().Any(o => o.ClassName == "PathedInterior"))
-                    count++;
-            }
-
-            // Finalization
-            count += 3;
-
-            return Mathf.Max(1, count);
-        }
-
-        // -------------------------
+        // -------------------------    
         // Conversion helpers
         // -------------------------
 

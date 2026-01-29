@@ -40,6 +40,11 @@ public class HelpCreditsManager : MonoBehaviour
 
     float initOffset;
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape)) SceneManager.LoadScene("MainMenu");
+    }
+
     public void Start()
     {
         Time.timeScale = 1f;

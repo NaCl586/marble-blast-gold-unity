@@ -57,7 +57,14 @@ public class GameManager : MonoBehaviour
             Destroy(MenuMusic.instance.gameObject);
 
         LevelMusic.instance.SetMusic(MissionInfo.instance.level);
+        levelMusic.volume = PlayerPrefs.GetFloat("Audio_MusicVolume", 0.5f);
         levelMusic.Play();
+    }
+
+    public void SetSoundVolumes()
+    {
+        foreach (var audioSource in FindObjectsOfType<AudioSource>())
+            audioSource.volume = PlayerPrefs.GetFloat("Audio_SoundVolume", 0.5f);
     }
 
     [Space]
@@ -116,8 +123,6 @@ public class GameManager : MonoBehaviour
     [HideInInspector] public static bool gameFinish = false;
     [HideInInspector] public static bool gameStart = false;
     [HideInInspector] public static bool isPaused = false;
-    [HideInInspector] public static bool cannotReset = false;
-    [HideInInspector] public static bool outOfBoundsState = false;
 
     //events
     public class OnFinish : UnityEvent { };
@@ -129,6 +134,8 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        isPaused = false;
+
         startTimer = false;
         timeTravelActive = false;
         activePowerup = PowerupType.None;
@@ -210,6 +217,14 @@ public class GameManager : MonoBehaviour
         //pause
         if (Input.GetKeyDown(KeyCode.Escape) && !gameFinish)
             TogglePause();
+
+        if (gameFinish)
+        {
+            if (enterNameMenu.activeSelf && Input.GetKeyDown(KeyCode.Return))
+                CloseEnterNameWindow();
+            else if (finishMenu.activeSelf && Input.GetKeyDown(KeyCode.Return))
+                ReturnToMenu();
+        }
     }
 
     public void TogglePause()
@@ -410,7 +425,7 @@ public class GameManager : MonoBehaviour
 
             gameFinish = true;
             CameraController.onCameraFinish?.Invoke();
-            Invoke(nameof(StopMarbleMovement), 0.125f);
+            Invoke(nameof(StopMarbleMovement), 0.0625f);
             Invoke(nameof(ShowFinishUI), 2f);
         }
 

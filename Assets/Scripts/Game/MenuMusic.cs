@@ -17,4 +17,9 @@ public class MenuMusic : MonoBehaviour
             Destroy(gameObject);
         }
     }
+
+    public void Start()
+    {
+        GetComponent<AudioSource>().volume = PlayerPrefs.GetFloat("Audio_MusicVolume", 0.5f);
+    }
 }

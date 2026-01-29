@@ -18,6 +18,11 @@ public class Gyrocopter : Powerups
         }
     }
 
+    public void OnDisable()
+    {
+        alreadyListened = false;
+        onUseGyrocopter.RemoveAllListeners();
+    }
     protected override void UsePowerup()
     {
         Marble.instance.UseGyrocopter();

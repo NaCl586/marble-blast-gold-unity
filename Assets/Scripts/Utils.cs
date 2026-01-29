@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
@@ -75,10 +76,7 @@ public static class Utils
 
         // Normalize
         string normalized = input
-            .Trim()
-            .Replace(" ", "")
-            .Replace("_", "")
-            .ToUpperInvariant();
+            .Trim();
 
         // Alias check
         if (Aliases.TryGetValue(normalized, out keyCode))
@@ -109,14 +107,14 @@ public static class Utils
     private static readonly Dictionary<KeyCode, string> DisplayNames =
         new Dictionary<KeyCode, string>()
     {
-        { KeyCode.LeftControl,  "Ctrl" },
-        { KeyCode.RightControl, "Ctrl" },
+        { KeyCode.LeftControl,  "Left Ctrl" },
+        { KeyCode.RightControl, "Right Ctrl" },
 
-        { KeyCode.LeftShift,  "Shift" },
-        { KeyCode.RightShift, "Shift" },
+        { KeyCode.LeftShift,  "Left Shift" },
+        { KeyCode.RightShift, "Right Shift" },
 
-        { KeyCode.LeftAlt,  "Alt" },
-        { KeyCode.RightAlt, "Alt" },
+        { KeyCode.LeftAlt,  "Left Alt" },
+        { KeyCode.RightAlt, "Right Alt" },
 
         { KeyCode.Return, "Enter" },
         { KeyCode.Escape, "Esc" },
@@ -222,5 +220,34 @@ public static class Utils
             KeyCode key = getter(ControlBinding.instance);
             return KeyCodeToString(key);
         });
+    }
+
+    private const float Aspect16by9 = 16f / 9f;
+    private const float AspectTolerance = 0.01f;
+
+    public static List<Resolution> Get16by9Resolutions(bool clampToMonitor = true)
+    {
+        Resolution max = Screen.currentResolution;
+
+        return Screen.resolutions
+            .Where(r =>
+            {
+                float aspect = (float)r.width / r.height;
+                if (Mathf.Abs(aspect - Aspect16by9) > AspectTolerance)
+                    return false;
+
+                if (clampToMonitor &&
+                    (r.width > max.width || r.height > max.height))
+                    return false;
+
+                return true;
+            })
+            // Remove refresh-rate duplicates
+            .GroupBy(r => (r.width, r.height))
+            .Select(g => g.First())
+            // Sort ascending
+            .OrderBy(r => r.width)
+            .ThenBy(r => r.height)
+            .ToList();
     }
 }
