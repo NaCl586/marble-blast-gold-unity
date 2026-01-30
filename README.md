@@ -8,11 +8,21 @@ The unity port of the classic game Marble Blast Gold, with the most accurate phy
 
 As the time of me writing this, the game has not been fully tested as I don't have the skill and capability to complete all levels.
 
-## Download the Windows build [here](https://github.com/NaCl586/mbg-unity-revisited/releases/tag/1.0)
+## Download the Windows build [here](https://github.com/NaCl586/mbg-unity-revisited/releases/tag/1.1)
 
 If you find bugs or things that are not faithful with the original Marble Blast Gold, feel free to message me on discord NaCl586#8479.
 
 Special thanks to Vani and RandomityGuy for helping me whenever I have problems when making this project.
+
+## Additional Controls
+
+Press R for quick respawn, works when the game is paused. This button currently is not remappable because I wanted to create the same UI remake without additional things. Also, setting video driver and color mode is just pure cosmetic and does not work.
+
+## Save Data
+
+<img src="https://i.imgur.com/u2wAziG.png" width="640">
+
+Save data uses [PlayerPrefs](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/PlayerPrefs.html), which can be accessed via Registry Editor (see picture). If you wanna unlock the levels, you can create a key or edit existing key called "QualifiedLevel[Difficulty]" to a large integer like 9999. The PlayerPrefs essentially is equivalent to prefs.cs in vanilla Marble Blast.
 
 ## Custom Level Support
 
