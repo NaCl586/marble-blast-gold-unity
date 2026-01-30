@@ -8,7 +8,7 @@ The unity port of the classic game Marble Blast Gold, with the most accurate phy
 
 As the time of me writing this, the game has not been fully tested as I don't have the skill and capability to complete all levels.
 
-## Download the Windows build [here](https://github.com/NaCl586/mbg-unity-revisited/releases/tag/1.1)
+## Download the Windows build [here](https://github.com/NaCl586/mbg-unity-revisited/releases/tag/1.2)
 
 If you find bugs or things that are not faithful with the original Marble Blast Gold, feel free to message me on discord NaCl586#8479.
 
