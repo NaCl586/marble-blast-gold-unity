@@ -293,7 +293,7 @@ namespace TS
                     gobj.transform.localRotation = rotation;
                     gobj.transform.localScale = scale;
 
-                    var difPath = ResolvePath(obj.GetField("interiorFile"));
+                    var difPath = ResolvePath(obj.GetField("interiorFile"), MissionInfo.instance.MissionPath);
                     var dif = gobj.GetComponent<Dif>();
                     dif.filePath = difPath;
 
@@ -669,7 +669,7 @@ namespace TS
                         gobj.transform.localScale = scale;
 
                         var resource = pathedInterior.GetField("interiorResource");
-                        var difPath = ResolvePath(resource);
+                        var difPath = ResolvePath(resource, MissionInfo.instance.MissionPath);
 
                         var dif = gobj.GetComponent<Dif>();
                         dif.filePath = difPath;
@@ -902,15 +902,32 @@ namespace TS
                 .ToArray();
         }
 
-        private string ResolvePath(string assetPath)
+        private string ResolvePath(string assetPath, string misPath)
         {
+            if (string.IsNullOrEmpty(assetPath))
+                return assetPath;
+
+            // Remove leading slashes
             assetPath = assetPath.TrimStart('/');
 
-            int slash = assetPath.IndexOf('/');
-            if (slash < 0)
-                return "marble/" + assetPath;
+            // --- Resolve special prefixes ---
+            if (assetPath[0] == '.')
+            {
+                assetPath = Path.GetDirectoryName(misPath) + assetPath.Substring(1);
+            }
+            else
+            {
+                // Replace anything before first '/' with "marble"
+                int slash = assetPath.IndexOf('/');
+                assetPath = slash >= 0
+                    ? "marble" + assetPath.Substring(slash)
+                    : "marble/" + assetPath;
+            }
 
-            return "marble" + assetPath.Substring(slash);
+            // --- Remove ALL backslashes ---
+            assetPath = assetPath.Replace("\\", "");
+
+            return assetPath;
         }
 
         public static TSObject ProcessObject(TSParser.Object_declContext objectDecl)
