@@ -692,7 +692,7 @@ namespace TS
                             int itp = 0;
                             if (int.TryParse(initialTargetPosition, out itp))
                             {
-                                movingPlatform.initialTargetPosition = itp;
+                                movingPlatform.initialTargetPosition = (float)itp / 1000;
                                 if (itp >= 0)
                                     movingPlatform.movementMode = MovementMode.Triggered;
                                 else

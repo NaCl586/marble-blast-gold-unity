@@ -29,7 +29,7 @@ public class MovingPlatform : MonoBehaviour
     public SmoothingType smoothing = SmoothingType.Linear;
     public MovementMode movementMode = MovementMode.Constant;
     public SequenceNumber[] sequenceNumbers;
-    public int initialTargetPosition;   // >=0 = marker, -1 = forward, -2 = backward
+    public float initialTargetPosition;   // >=0 = targetPos time, -1 = forward, -2 = backward
     public float initialPosition = 0f;
     public float resolution = 0.1f; // spline density
 
@@ -99,7 +99,7 @@ public class MovingPlatform : MonoBehaviour
         }
 
         time = Mathf.Clamp(initialPosition, 0f, maxReachableTime);
-        targetTime = ComputeTargetTime();
+        targetTime = initialTargetPosition;
 
         index = FindSegmentIndex(time);
         initialIndex = index;
@@ -119,7 +119,7 @@ public class MovingPlatform : MonoBehaviour
     public void ResetMP()
     {
         time = Mathf.Clamp(initialPosition, 0f, maxReachableTime);
-        targetTime = ComputeTargetTime();
+        targetTime = initialTargetPosition;
 
         index = FindSegmentIndex(time);
 
@@ -144,26 +144,6 @@ public class MovingPlatform : MonoBehaviour
     {
         if (movementMode == MovementMode.Triggered)
             targetTime = Mathf.Clamp(t, 0f, maxReachableTime);
-    }
-
-    float ComputeTargetTime()
-    {
-        if (initialTargetPosition < 0)
-            return -1f;
-
-        var seq = (smoothing == SmoothingType.Spline)
-            ? splineSequence
-            : sequenceNumbers;
-
-        int count = seq.Length;
-        int target = Mathf.Clamp(initialTargetPosition, 0, count);
-
-        float t = 0f;
-
-        for (int i = 0; i < target && i < count - 1; i++)
-            t += seq[i].secondsToNext;
-
-        return t;
     }
 
     // ─────────────────────────────────────────────
