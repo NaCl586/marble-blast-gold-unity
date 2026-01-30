@@ -62,8 +62,8 @@ public class FrictionManager : MonoBehaviour
         else
             movement.bounceRestitution = m_restitution;
 
-        defaultPhysicMaterial.staticFriction = 0.7f;
-        defaultPhysicMaterial.dynamicFriction = 1.1f;
+        defaultPhysicMaterial.staticFriction = 1.1f;
+        defaultPhysicMaterial.dynamicFriction = 0.7f;
         defaultPhysicMaterial.bounciness = 1;
     }
 
@@ -87,7 +87,7 @@ public class FrictionManager : MonoBehaviour
 
         if (frictionSO.restitution != -1)
         {
-            movement.bounceRestitution = frictionSO.restitution;
+            movement.bounceRestitution = frictionSO.restitution * 0.5f;
         }
 
         if (frictionSO.bounce != -1)

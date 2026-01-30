@@ -555,7 +555,7 @@ MonoBehaviour:
   maxRollVelocity: 15
   angularAcceleration: 75
   brakingAcceleration: 30
-  airAcceleration: 5
+  airAcceleration: 7
   gravity: 20
   staticFriction: 1.1
   kineticFriction: 0.7
