@@ -624,11 +624,7 @@ namespace TS
 
                         ibtObj.transform.localPosition = position;
                         ibtObj.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-                        ibtObj.transform.localScale = Vector3.one;
-
-                        var box = ibtObj.GetComponent<BoxCollider>();
-                        box.size = Vector3.Scale(scale, polyhedronScale);
-                        box.center = Vector3.zero;
+                        ibtObj.transform.localScale = Vector3.Scale(scale, polyhedronScale);
                     }
 
                     else
@@ -648,11 +644,7 @@ namespace TS
 
                             htObj.transform.localPosition = position;
                             htObj.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-                            htObj.transform.localScale = Vector3.one;
-
-                            var box = htObj.GetComponent<BoxCollider>();
-                            box.size = Vector3.Scale(scale, polyhedronScale);
-                            box.center = Vector3.zero;
+                            htObj.transform.localScale = Vector3.Scale(scale, polyhedronScale);
                         }
                     }
                 }
@@ -741,11 +733,7 @@ namespace TS
 
                             tgttObj.transform.localPosition = position;
                             tgttObj.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-                            tgttObj.transform.localScale = Vector3.one;
-
-                            var box = tgttObj.GetComponent<BoxCollider>();
-                            box.size = Vector3.Scale(scale, polyhedronScale);
-                            box.center = Vector3.zero;
+                            tgttObj.transform.localScale = Vector3.Scale(scale, polyhedronScale);
 
                             TriggerGoToTarget tgtt = tgttObj.GetComponent<TriggerGoToTarget>();
                             tgtt.movingPlatform = movingPlatform;
