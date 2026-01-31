@@ -102,8 +102,8 @@ namespace TS
 
                     directionalLight.transform.localRotation = direction;
                     directionalLight.color = color;
-                    directionalLight.intensity = ConvertIntensity(directionalLight.color, 1f);
                     RenderSettings.ambientLight = ambient;
+                    directionalLight.intensity = ConvertIntensity(color, 0.25f);
                 }
 
                 //Gem
@@ -152,7 +152,7 @@ namespace TS
                         var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
 
                         string showInfo = obj.GetField("showHelpOnPickup");
-                        if (!string.IsNullOrEmpty(showInfo))
+                        if (showInfo != string.Empty)
                         {
                             bool showInfotutorial = int.Parse(showInfo) == 1;
                             gobj.GetComponent<Powerups>().showHelpOnPickup = showInfotutorial;
@@ -176,7 +176,7 @@ namespace TS
                         var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
 
                         string showInfo = obj.GetField("showHelpOnPickup");
-                        if (!string.IsNullOrEmpty(showInfo))
+                        if (showInfo != string.Empty)
                         {
                             bool showInfotutorial = int.Parse(showInfo) == 1;
                             gobj.GetComponent<Powerups>().showHelpOnPickup = showInfotutorial;
@@ -200,7 +200,7 @@ namespace TS
                         var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
 
                         string showInfo = obj.GetField("showHelpOnPickup");
-                        if (!string.IsNullOrEmpty(showInfo))
+                        if (showInfo != string.Empty)
                         {
                             bool showInfotutorial = int.Parse(showInfo) == 1;
                             gobj.GetComponent<Powerups>().showHelpOnPickup = showInfotutorial;
@@ -224,7 +224,7 @@ namespace TS
                         var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
 
                         string showInfo = obj.GetField("showHelpOnPickup");
-                        if (!string.IsNullOrEmpty(showInfo))
+                        if (showInfo != string.Empty)
                         {
                             bool showInfotutorial = int.Parse(showInfo) == 1;
                             gobj.GetComponent<Powerups>().showHelpOnPickup = showInfotutorial;
@@ -248,7 +248,7 @@ namespace TS
                         var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
 
                         string showInfo = obj.GetField("showHelpOnPickup");
-                        if (!string.IsNullOrEmpty(showInfo))
+                        if (showInfo != string.Empty)
                         {
                             bool showInfotutorial = int.Parse(showInfo) == 1;
                             gobj.GetComponent<Powerups>().showHelpOnPickup = showInfotutorial;
@@ -278,7 +278,7 @@ namespace TS
                         gobj.transform.localScale = new Vector3(scale.x * localScale.x, scale.y * localScale.y, scale.z * localScale.z);
 
                         string timeBonus = obj.GetField("timeBonus");
-                        if (!string.IsNullOrEmpty(timeBonus))
+                        if (timeBonus != string.Empty)
                             gobj.GetComponent<TimeTravel>().timeBonus = (float)int.Parse(timeBonus) / 1000;
                         else
                             gobj.GetComponent<TimeTravel>().timeBonus = 5;
@@ -616,18 +616,14 @@ namespace TS
                         ibtObj.name = "InBoundsTrigger";
 
                         var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
-                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")), false);
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
                         var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
 
                         var polyhedronScale = PolyhedronToBoxSize(ParseVectorString(obj.GetField("polyhedron")));
 
                         ibtObj.transform.localPosition = position;
-                        ibtObj.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-                        ibtObj.transform.localScale = Vector3.one;
-
-                        var box = ibtObj.GetComponent<BoxCollider>();
-                        box.size = Vector3.Scale(scale, polyhedronScale);
-                        box.center = Vector3.zero;
+                        ibtObj.transform.localRotation = rotation;
+                        ibtObj.transform.localScale = new Vector3(scale.x * polyhedronScale.z, scale.y * polyhedronScale.x, scale.z * polyhedronScale.y);
                     }
 
                     else
@@ -640,27 +636,23 @@ namespace TS
                             htObj.GetComponent<HelpTrigger>().helpText = obj.GetField("text");
 
                             var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
-                            var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")), false);
+                            var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")));
                             var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
 
                             var polyhedronScale = PolyhedronToBoxSize(ParseVectorString(obj.GetField("polyhedron")));
 
                             htObj.transform.localPosition = position;
-                            htObj.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-                            htObj.transform.localScale = Vector3.one;
-
-                            var box = htObj.GetComponent<BoxCollider>();
-                            box.size = Vector3.Scale(scale, polyhedronScale);
-                            box.center = Vector3.zero;
+                            htObj.transform.localRotation = rotation;
+                            htObj.transform.localScale = new Vector3(scale.x * polyhedronScale.z, scale.y * polyhedronScale.x, scale.z * polyhedronScale.y);
                         }
                     }
                 }
 
                 //Moving platforms
-                if (obj.ClassName == "SimGroup")
+                else if (obj.ClassName == "SimGroup" && obj.Name != "MissionGroup")
                 {
                     // Grab the PathedInterior child
-                    var pathedInterior = obj.GetFirstChildrens()
+                    var pathedInterior = obj.RecursiveChildren()
                         .FirstOrDefault(o => o.ClassName == "PathedInterior");
 
                     if (pathedInterior == null)
@@ -695,13 +687,13 @@ namespace TS
                         movingPlatform = gobj.GetComponent<MovingPlatform>();
 
                         string initialPosition = pathedInterior.GetField("initialPosition");
-                        if (!string.IsNullOrEmpty(initialPosition))
+                        if (initialPosition != string.Empty)
                             movingPlatform.initialPosition = (float)int.Parse(initialPosition) / 1000;
                         else
                             movingPlatform.initialPosition = 0;
 
                         string initialTargetPosition = pathedInterior.GetField("initialTargetPosition");
-                        if (!string.IsNullOrEmpty(initialTargetPosition))
+                        if (initialTargetPosition != string.Empty)
                         {
                             int itp = 0;
                             if (int.TryParse(initialTargetPosition, out itp))
@@ -723,7 +715,7 @@ namespace TS
                     //if ITP = 0, put the triggergototargets
                     if (movingPlatform.movementMode == MovementMode.Triggered)
                     {
-                        var tgtts = obj.GetFirstChildrens()
+                        var tgtts = obj.RecursiveChildren()
                             .Where(o => o.ClassName == "Trigger")
                             .ToList();
 
@@ -733,18 +725,14 @@ namespace TS
                             tgttObj.name = "TriggerGoToTarget";
 
                             var position = ConvertPoint(ParseVectorString(trigger.GetField("position")));
-                            var rotation = ConvertRotation(ParseVectorString(trigger.GetField("rotation")), false);
+                            var rotation = ConvertRotation(ParseVectorString(trigger.GetField("rotation")));
                             var scale = ConvertScale(ParseVectorString(trigger.GetField("scale")));
 
                             var polyhedronScale = PolyhedronToBoxSize(ParseVectorString(trigger.GetField("polyhedron")));
 
                             tgttObj.transform.localPosition = position;
-                            tgttObj.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-                            tgttObj.transform.localScale = Vector3.one;
-
-                            var box = tgttObj.GetComponent<BoxCollider>();
-                            box.size = Vector3.Scale(scale, polyhedronScale);
-                            box.center = Vector3.zero;
+                            tgttObj.transform.localRotation = rotation;
+                            tgttObj.transform.localScale = new Vector3(scale.x * polyhedronScale.z, scale.y * polyhedronScale.x, scale.z * polyhedronScale.y);
 
                             TriggerGoToTarget tgtt = tgttObj.GetComponent<TriggerGoToTarget>();
                             tgtt.movingPlatform = movingPlatform;
@@ -760,13 +748,13 @@ namespace TS
                     movingPlatform.sequenceNumbers = new SequenceNumber[markers.Count];
                     List<SmoothingType> smoothingTypes = new List<SmoothingType>();
 
-                    for (int i = 0; i < markers.Count; i++)
+                    foreach (var marker in markers)
                     {
-                        Vector3 pos = ConvertPoint(ParseVectorString(markers[i].GetField("position")));
-                        int seq = i;
-                        int msToNext = int.Parse(markers[i].GetField("msToNext"));
+                        Vector3 pos = ConvertPoint(ParseVectorString(marker.GetField("position")));
+                        int seq = int.Parse(marker.GetField("seqNum"));
+                        int msToNext = int.Parse(marker.GetField("msToNext"));
 
-                        SmoothingType smoothingType = (SmoothingType)Enum.Parse(typeof(SmoothingType), markers[i].GetField("smoothingType"));
+                        SmoothingType smoothingType = (SmoothingType)Enum.Parse(typeof(SmoothingType), marker.GetField("smoothingType"));
                         smoothingTypes.Add(smoothingType);
 
                         GameObject markerInstance = Instantiate(new GameObject(), transform, false);
@@ -776,6 +764,9 @@ namespace TS
                         SequenceNumber sequence = new SequenceNumber();
                         sequence.marker = markerInstance;
                         sequence.secondsToNext = (float)msToNext / 1000;
+
+                        if (seq >= markers.Count)
+                            seq = markers.Count - 1;
 
                         movingPlatform.sequenceNumbers[seq] = sequence;
                     }
@@ -880,7 +871,7 @@ namespace TS
             Vector3 axis = new Vector3(torqueRotation[0], -torqueRotation[1], torqueRotation[2]);
             Quaternion rot = Quaternion.AngleAxis(angle, axis);
 
-            if (additionalRotate)
+            if(additionalRotate) 
                 rot = Quaternion.Euler(-90.0f, 0, 0) * rot;
 
             return rot;
@@ -891,19 +882,21 @@ namespace TS
             return new Vector3(s[0], s[1], s[2]);
         }
 
-        private Vector3 PolyhedronToBoxSize(float[] poly)
+        private Vector3 PolyhedronToBoxSize(float[] polyhedron)
         {
-            if (poly == null || poly.Length != 12)
+            if (polyhedron == null || polyhedron.Length != 12)
                 throw new ArgumentException("Polyhedron must be 12 floats: origin + 3 edge vectors");
 
-            Vector3 d1 = new Vector3(poly[3], poly[4], poly[5]);
-            Vector3 d2 = new Vector3(poly[6], poly[7], poly[8]);
-            Vector3 d3 = new Vector3(poly[9], poly[10], poly[11]);
+            // Edge vectors start at index 3
+            Vector3 edgeX = new Vector3(polyhedron[3], polyhedron[4], polyhedron[5]);
+            Vector3 edgeY = new Vector3(polyhedron[6], polyhedron[7], polyhedron[8]);
+            Vector3 edgeZ = new Vector3(polyhedron[9], polyhedron[10], polyhedron[11]);
 
+            // Size is simply the length of each edge vector
             return new Vector3(
-                Mathf.Abs(d1.x) + Mathf.Abs(d2.x) + Mathf.Abs(d3.x),
-                Mathf.Abs(d1.y) + Mathf.Abs(d2.y) + Mathf.Abs(d3.y),
-                Mathf.Abs(d1.z) + Mathf.Abs(d2.z) + Mathf.Abs(d3.z)
+                edgeX.magnitude,
+                edgeY.magnitude,
+                edgeZ.magnitude
             );
         }
 
@@ -943,7 +936,7 @@ namespace TS
             // --- Remove ALL backslashes ---
             assetPath = assetPath.Replace("\\", "");
 
-            if (assetPath.EndsWith("\""))
+            if(assetPath.EndsWith("\""))
                 assetPath = assetPath.Substring(0, assetPath.Length - 1);
 
             return assetPath;
@@ -991,6 +984,5 @@ namespace TS
 
             return obj;
         }
-
     }
 }
