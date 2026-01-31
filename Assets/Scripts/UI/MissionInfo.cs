@@ -161,10 +161,10 @@ public class MissionInfo : MonoBehaviour
                     else
                         newMission.time = -1;
 
-                    newMission.missionName = levelName;
-                    newMission.levelName = (obj.GetField("name"));
-                    newMission.description = (obj.GetField("desc"));
-                    newMission.startHelpText = (obj.GetField("startHelpText"));
+                    newMission.missionName = levelName.Replace("\\", "");
+                    newMission.levelName = (obj.GetField("name").Replace("\\", ""));
+                    newMission.description = (obj.GetField("desc").Replace("\\", ""));
+                    newMission.startHelpText = (obj.GetField("startHelpText").Replace("\\", ""));
 
                     int _level = 0;
                     if (int.TryParse(obj.GetField("level"), out _level))
@@ -225,7 +225,7 @@ public class MissionInfo : MonoBehaviour
             .Select(m => new
             {
                 Mission = m,
-                NormalizedLevel = Mathf.Clamp(m.levelNumber, 0, maxIndex)
+                NormalizedLevel = Mathf.Clamp(m.levelNumber, 0, (maxIndex + 1))
             })
             .ToList();
 
