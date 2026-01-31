@@ -12,6 +12,7 @@ Material:
   m_Parent: {fileID: 2100000, guid: eab7bb00cced7524285e30b8ae0a9936, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _SPECULARHIGHLIGHTS_OFF
   - _SPECULAR_SETUP
   - _SURFACE_TYPE_TRANSPARENT
   m_InvalidKeywords: []
@@ -38,6 +39,8 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _Smoothness: 0.75
+    - _SpecularHighlights: 0
     - _WorkflowMode: 0
     m_Colors:
     - _SpecColor: {r: 0.4, g: 0.4, b: 0.4, a: 1}
