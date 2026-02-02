@@ -25,6 +25,7 @@ public class Mission
     public string artist;
     public int goldTime;
     public int ultimateTime;
+    public string skyboxName;
 }
 
 public enum Type 
@@ -73,6 +74,9 @@ public class PlayMissionManager : MonoBehaviour
 
     public void Start()
     {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         StartCoroutine(WaitUntilFinishLoading());
     }
 
@@ -255,6 +259,7 @@ public class PlayMissionManager : MonoBehaviour
         MissionInfo.instance.artist = missions[number].artist;
         MissionInfo.instance.goldTime = missions[number].goldTime;
         MissionInfo.instance.ultimateTime = missions[number].ultimateTime;
+        MissionInfo.instance.skybox = missions[number].skyboxName;
 
         bestTimesText.text = string.Empty;
         for (int i = 0; i < 3; i++)

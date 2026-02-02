@@ -18,11 +18,29 @@ public class GameManager : MonoBehaviour
         onCollectGem.AddListener(UpdateGem);
 
         Marble.onRespawn.AddListener(Respawn);
+
+        StartCoroutine(AssignReferences());
     }
 
-    [Header("Level Objects")]
-    public GameObject startPad;
-    public GameObject finishPad;
+    public GameObject mainCam;
+    public GameObject gameUIManager;
+
+    IEnumerator AssignReferences()
+    {
+        while (!Marble.instance)
+        {
+            yield return null;
+        }
+
+        startPad = GameObject.Find("StartPad");
+        finishPad = GameObject.Find("EndPad");
+
+        mainCam.SetActive(true);
+        gameUIManager.SetActive(true);
+    }
+
+    [HideInInspector] public GameObject startPad;
+    [HideInInspector] public GameObject finishPad;
 
     [Space]
     [Header("Audio Clips")]
@@ -85,9 +103,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] Button restartButton;
     [SerializeField] Button okayButton;
     [SerializeField] TMP_InputField nameInputField;
-
-    [HideInInspector] public GameObject activeCheckpoint;
-    bool useCheckpoint;
 
     [Space]
     [SerializeField] AudioSource audioSource;
@@ -323,17 +338,9 @@ public class GameManager : MonoBehaviour
 
         CameraController.instance.LockCamera(true);
 
-        if (!useCheckpoint)
-        {
-            Movement.instance.StopAllMovement();
-            Movement.instance.StopAllbutJumping();
-            GameStateStart();
-        }
-        else
-        {
-            Movement.instance.StopAllMovement();
-            Movement.instance.StartMoving();
-        }
+        Movement.instance.StopAllMovement();
+        Movement.instance.StopAllbutJumping();
+        GameStateStart();
 
         Marble.instance.RevertMaterial();
         Marble.instance.ToggleGyrocopterBlades(false);

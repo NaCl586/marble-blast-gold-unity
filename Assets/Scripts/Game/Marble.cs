@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
@@ -25,7 +26,6 @@ public class Marble : MonoBehaviour
     public GameObject bounceParticle;
 
     public Movement movement;
-    public FrictionManager frictionManager;
     public Transform startPoint;
     public class OnRespawn : UnityEvent { };
     public static OnRespawn onRespawn = new OnRespawn();
@@ -168,9 +168,7 @@ public class Marble : MonoBehaviour
         {
             GameManager.instance.superBounceIsActive = true;
 
-            //marble is changed into super bounce material
-            frictionManager.RevertMaterial();
-            movement.bounceRestitution = 1f;
+            movement.bounceRestitution = 0.9f;
         }
     }
 
@@ -186,10 +184,7 @@ public class Marble : MonoBehaviour
         if (!GameManager.instance.shockAbsorberIsActive)
         {
             GameManager.instance.shockAbsorberIsActive = true;
-
-            //marble is changed into super bounce material
-            frictionManager.RevertMaterial();
-            movement.bounceRestitution = 0f;
+            movement.bounceRestitution = 0.01f;
         }
     }
 

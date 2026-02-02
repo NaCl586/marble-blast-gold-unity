@@ -118,7 +118,8 @@ public class CheckCollision : MonoBehaviour
         ApplyCollision(hit);
     }
 
-    private void OnManualCollisionStay(Collider collider, RaycastHit hit) { 
+    private void OnManualCollisionStay(Collider collider, RaycastHit hit)
+    {
         ApplyCollision(hit);
 
         Trapdoor t;
@@ -150,14 +151,6 @@ public class CheckCollision : MonoBehaviour
         if (other.CompareTag("Finish"))
             GameManager.onFinish?.Invoke();
 
-        Tornado t;
-        if (other.TryGetComponent<Tornado>(out t))
-            t.playerIsColliding = true;
-
-        DuctFan df;
-        if (other.TryGetComponent<DuctFan>(out df))
-            df.playerIsColliding = true;
-
         HelpTrigger ht;
         if (other.TryGetComponent<HelpTrigger>(out ht))
             ht.TriggerEnter();
@@ -167,23 +160,12 @@ public class CheckCollision : MonoBehaviour
     {
         if (other.CompareTag("InBounds"))
             GameManager.onOutOfBounds?.Invoke();
-
-        Tornado t;
-        if (other.TryGetComponent<Tornado>(out t))
-            t.playerIsColliding = false;
-
-        DuctFan df;
-        if (other.TryGetComponent<DuctFan>(out df))
-            df.playerIsColliding = false;
     }
 
     private void ClearCollisionState()
     {
         isColliding = false;
         other = null;
-        movement.collidedTexture = null;
-
-        FrictionManager.instance.RevertMaterial();
     }
 
     public Vector3 Rounding(Vector3 _vector)
@@ -207,20 +189,6 @@ public class CheckCollision : MonoBehaviour
         point = hit.point;
         other = hit.collider;
         isColliding = true;
-
-        string detectedTextureName = string.Empty;
-        movement.collidedTexture = ResolveTexture(hit, out detectedTextureName);
-
-        const string instanceSuffix = " (Instance)";
-        if (detectedTextureName.EndsWith(instanceSuffix))
-            detectedTextureName = detectedTextureName.Substring(0, detectedTextureName.Length - instanceSuffix.Length);
-
-        FrictionSO frictionSO = FrictionManager.instance.SearchFriction(detectedTextureName);
-
-        if (frictionSO)
-            FrictionManager.instance.ApplyMaterial(frictionSO);
-        else
-            FrictionManager.instance.RevertMaterial();
     }
 
     // Material Detection

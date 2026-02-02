@@ -40,6 +40,7 @@ public class MissionInfo : MonoBehaviour
     public string artist;
     public int goldTime;
     public int ultimateTime;
+    public string skybox;
 
     [Header("Load Mission")]
     public List<Mission> missionsBeginner = new List<Mission>();
@@ -188,8 +189,13 @@ public class MissionInfo : MonoBehaviour
                         newMission.ultimateTime = _ultimateTime;
                     else
                         newMission.ultimateTime = -1;
+                }
 
-                    break;
+                else if (obj.ClassName == "Sky")
+                {
+                    var skybox = ResolvePath(obj.GetField("materialList"), MissionInfo.instance.MissionPath);
+
+                    newMission.skyboxName = Path.GetFileNameWithoutExtension(skybox);
                 }
             }
 
@@ -267,5 +273,42 @@ public class MissionInfo : MonoBehaviour
         return result;
     }
 
+    private string ResolvePath(string assetPath, string misPath)
+    {
+        if (string.IsNullOrEmpty(assetPath))
+            return assetPath;
 
+        // Normalize slashes first
+        assetPath = assetPath.Replace('\\', '/');
+
+        // Remove trailing quote if present
+        if (assetPath.EndsWith("\""))
+            assetPath = assetPath.Substring(0, assetPath.Length - 1);
+
+        // Remove leading slashes
+        assetPath = assetPath.TrimStart('/');
+
+        // --- Resolve special prefixes ---
+        if (assetPath[0] == '.')
+        {
+            // Relative to mission file
+            assetPath = Path.GetDirectoryName(misPath).Replace('\\', '/')
+                        + assetPath.Substring(1);
+        }
+        else
+        {
+            // Replace anything before first '/' with "marble"
+            int slash = assetPath.IndexOf('/');
+            assetPath = slash >= 0
+                ? "marble" + assetPath.Substring(slash)
+                : "marble/" + assetPath;
+        }
+
+        // --- Fix lbinteriors_* folders ---
+        assetPath = assetPath
+            .Replace("/lbinteriors_mbp/", "/interiors_mbp/")
+            .Replace("/lbinteriors_mbg/", "/interiors_mbg/");
+
+        return assetPath;
+    }
 }

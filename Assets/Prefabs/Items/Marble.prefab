@@ -208,7 +208,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 051e72c26783d274b9220d86c25dc7e6, type: 3}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 0
   m_Pitch: 1
   Loop: 1
@@ -436,7 +436,6 @@ GameObject:
   - component: {fileID: 5528955957562662288}
   - component: {fileID: 6222272426371884095}
   - component: {fileID: 2259544043996708080}
-  - component: {fileID: 4115090105305160933}
   - component: {fileID: 3094592717009676412}
   m_Layer: 0
   m_Name: Marble
@@ -568,8 +567,6 @@ MonoBehaviour:
   bounce: 0
   marbleVelocity: {x: 0, y: 0, z: 0}
   marbleAngularVelocity: {x: 0, y: 0, z: 0}
-  collidedTexture: {fileID: 0}
-  defaultMaterial: {fileID: 13400000, guid: 9f602b3fd3a59419e8822de779a930ea, type: 2}
 --- !u!114 &2259544043996708080
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -599,29 +596,7 @@ MonoBehaviour:
   bounceParticle: {fileID: 2747320370206154753, guid: 99e7300f735da1546ad1571b44ea5c84,
     type: 3}
   movement: {fileID: 6222272426371884095}
-  frictionManager: {fileID: 4115090105305160933}
   startPoint: {fileID: 0}
---- !u!114 &4115090105305160933
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2419521798252407534}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e489c2c315299b740962e3e49a1eab31, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  frictions:
-  - {fileID: 11400000, guid: 7c376d57190d77b4aa7fe04f605d9082, type: 2}
-  - {fileID: 11400000, guid: 4bd3b3fc5198f77488609f2ab68403f3, type: 2}
-  - {fileID: 11400000, guid: 45bde35a947462b4da02b0c156eaaa38, type: 2}
-  - {fileID: 11400000, guid: 700211cb0a28a974ca9f12cf673ac75b, type: 2}
-  - {fileID: 11400000, guid: 668cb370579c0e249b73370cced16658, type: 2}
-  defaultPhysicMaterial: {fileID: 13400000, guid: 9f602b3fd3a59419e8822de779a930ea,
-    type: 2}
-  m_restitution: 0
 --- !u!82 &3094592717009676412
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1306,7 +1281,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 031be52e1207f3041bddc64423ef9f8c, type: 3}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 0
   m_Pitch: 1
   Loop: 1

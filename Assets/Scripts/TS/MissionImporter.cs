@@ -7,6 +7,7 @@ using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 using System.Globalization;
+using UnityEngine.SceneManagement;
 
 namespace TS
 {
@@ -20,6 +21,7 @@ namespace TS
         public GameObject triggerGoToTarget;
         public GameObject inBoundsTrigger;
         public GameObject helpTriggerInstance;
+        public GameObject outOfBoundsTrigger;
         [Space]
         public GameObject finishSignPrefab;
         public GameObject signPlainPrefab;
@@ -53,6 +55,8 @@ namespace TS
         public GameObject startPad;
         public GameObject finishPad;
         public Light directionalLight;
+
+        private float[] sunColor;
 
         void Start()
         {
@@ -93,18 +97,18 @@ namespace TS
             var mission = MissionObjects[0];
             var children = mission.GetFirstChildrens();
 
-            foreach (var obj in mission.GetFirstChildrens())
+            foreach (var obj in mission.RecursiveChildren())
             {
                 if (obj.ClassName == "Sun")
                 {
                     var direction = ConvertDirection(ParseVectorString(obj.GetField("direction")));
-                    var color = ConvertColor(ParseVectorString(obj.GetField("color")));
-                    var ambient = ConvertAmbient(ParseVectorString(obj.GetField("ambient")));
+                    sunColor = ParseVectorString(obj.GetField("color"));
+                    var ambient = ParseVectorString(obj.GetField("ambient"));
 
                     directionalLight.transform.localRotation = direction;
-                    directionalLight.color = color;
-                    directionalLight.intensity = ConvertIntensity(directionalLight.color, 0.25f);
-                    RenderSettings.ambientLight = ambient;
+                    directionalLight.color = new Color(sunColor[0], sunColor[1], sunColor[2], 1f);
+
+                    RenderSettings.ambientLight = new Color(ambient[0], ambient[1], ambient[2], 1f);
                 }
 
                 //Gem
@@ -365,6 +369,8 @@ namespace TS
                         gobj.transform.localRotation = rotation;
                         gobj.transform.localScale = new Vector3(scale.x * localScale.x, scale.y * localScale.y, scale.z * localScale.z);
                     }
+
+                    //Signs MBG
                     else if (objectName == "SignPlain")
                     {
                         var gobj = Instantiate(signPlainPrefab, transform, false);
@@ -607,6 +613,7 @@ namespace TS
                     }
                 }
 
+                //Triggers
                 else if (obj.ClassName == "Trigger")
                 {
                     string objectName = obj.GetField("dataBlock");
@@ -625,6 +632,22 @@ namespace TS
                         ibtObj.transform.localPosition = position;
                         ibtObj.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
                         ibtObj.transform.localScale = Vector3.Scale(scale, polyhedronScale);
+                    }
+
+                    else if (objectName == "OutOfBoundsTrigger")
+                    {
+                        var oobtObj = Instantiate(outOfBoundsTrigger, transform, false);
+                        oobtObj.name = "OutOfBoundsTrigger";
+
+                        var position = ConvertPoint(ParseVectorString(obj.GetField("position")));
+                        var rotation = ConvertRotation(ParseVectorString(obj.GetField("rotation")), false);
+                        var scale = ConvertScale(ParseVectorString(obj.GetField("scale")));
+
+                        var polyhedronScale = PolyhedronToBoxSize(ParseVectorString(obj.GetField("polyhedron")));
+
+                        oobtObj.transform.localPosition = position;
+                        oobtObj.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+                        oobtObj.transform.localScale = Vector3.Scale(scale, polyhedronScale);
                     }
 
                     else
@@ -683,7 +706,7 @@ namespace TS
 
                         // Parse interiorIndex from mission file
                         indexStr = int.Parse(pathedInterior.GetField("interiorIndex"));
-                        dif.GenerateMovingPlatformMesh(indexStr);
+                        dif.GenerateMesh(indexStr);
 
                         movingPlatform = gobj.GetComponent<MovingPlatform>();
 
@@ -722,22 +745,25 @@ namespace TS
 
                         foreach (var trigger in tgtts)
                         {
-                            var tgttObj = Instantiate(triggerGoToTarget, transform, false);
-                            tgttObj.name = "TriggerGoToTarget";
+                            if (!string.IsNullOrEmpty(trigger.GetField("targetTime")))
+                            {
+                                var tgttObj = Instantiate(triggerGoToTarget, transform, false);
+                                tgttObj.name = "TriggerGoToTarget";
 
-                            var position = ConvertPoint(ParseVectorString(trigger.GetField("position")));
-                            var rotation = ConvertRotation(ParseVectorString(trigger.GetField("rotation")), false);
-                            var scale = ConvertScale(ParseVectorString(trigger.GetField("scale")));
+                                var position = ConvertPoint(ParseVectorString(trigger.GetField("position")));
+                                var rotation = ConvertRotation(ParseVectorString(trigger.GetField("rotation")), false);
+                                var scale = ConvertScale(ParseVectorString(trigger.GetField("scale")));
 
-                            var polyhedronScale = PolyhedronToBoxSize(ParseVectorString(trigger.GetField("polyhedron")));
+                                var polyhedronScale = PolyhedronToBoxSize(ParseVectorString(trigger.GetField("polyhedron")));
 
-                            tgttObj.transform.localPosition = position;
-                            tgttObj.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-                            tgttObj.transform.localScale = Vector3.Scale(scale, polyhedronScale);
+                                tgttObj.transform.localPosition = position;
+                                tgttObj.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+                                tgttObj.transform.localScale = Vector3.Scale(scale, polyhedronScale);
 
-                            TriggerGoToTarget tgtt = tgttObj.GetComponent<TriggerGoToTarget>();
-                            tgtt.movingPlatform = movingPlatform;
-                            tgtt.targetTime = (float)int.Parse(trigger.GetField("targetTime")) / 1000;
+                                TriggerGoToTarget tgtt = tgttObj.GetComponent<TriggerGoToTarget>();
+                                tgtt.movingPlatform = movingPlatform;
+                                tgtt.targetTime = (float)int.Parse(trigger.GetField("targetTime")) / 1000;
+                            }
                         }
                     }
 
@@ -780,6 +806,14 @@ namespace TS
                 }
             }
 
+            StartCoroutine(DelayBeforeRespawn());
+        }
+
+        IEnumerator DelayBeforeRespawn()
+        {
+            while (!GameManager.instance.startPad)
+                yield return null;
+
             globalMarble.GetComponent<Movement>().GenerateMeshData();
 
             Time.timeScale = 1f;
@@ -789,57 +823,48 @@ namespace TS
             GameManager.instance.PlayLevelMusic();
 
             directionalLight.GetComponent<Light>().shadows = PlayerPrefs.GetInt("Graphics_Shadow", 1) == 1 ? LightShadows.Soft : LightShadows.None;
+            directionalLight.intensity = 0.25f;
+
+            AsyncOperation unloadOp = SceneManager.UnloadSceneAsync("Loading");
+            while (!unloadOp.isDone)
+                yield return null;
+
+            SceneManager.SetActiveScene(SceneManager.GetSceneByName(MissionInfo.instance.skybox));
+
+            CameraController.instance.GetComponent<Camera>().enabled = true;
+            GameUIManager.instance.GetComponent<Canvas>().enabled = true;
+
+            Invoke(nameof(EnableSounds), 0.1f);
 
             Marble.onRespawn?.Invoke();
+        }
+
+        void EnableSounds()
+        {
+            var sounds = Marble.instance.transform.Find("Sounds");
+            var audioSources = sounds.GetComponentsInChildren<AudioSource>(true);
+            var rolling = audioSources.First(a => a.name == "Rolling");
+            var sliding = audioSources.First(a => a.name == "Sliding");
+            rolling.Play();
+            sliding.Play();
         }
 
         // -------------------------    
         // Conversion helpers
         // -------------------------
-
-        Color ConvertColor(float[] torqueRGBA)
-        {
-            if (torqueRGBA == null || torqueRGBA.Length < 3)
-                return Color.white;
-
-            float r = torqueRGBA[0];
-            float g = torqueRGBA[1];
-            float b = torqueRGBA[2];
-            float a = torqueRGBA.Length > 3 ? torqueRGBA[3] : 1f;
-
-            float intensity = Mathf.Max(r, g, b);
-            if (intensity <= 0f)
-                intensity = 1f;
-
-            return new Color(r / intensity, g / intensity, b / intensity, a);
-        }
-
-        float ConvertIntensity(Color torqueColor, float intensityScale = 1.0f)
+        float ConvertIntensity(float[] torqueColor)
         {
             // Torque stores brightness in RGB
             float intensity = Mathf.Max(
-                torqueColor.r,
-                torqueColor.g,
-                torqueColor.b
+                torqueColor[0],
+                torqueColor[1],
+                torqueColor[2]
             );
 
             if (intensity <= 0f)
                 intensity = 1f;
 
-            return intensity * intensityScale;
-        }
-
-        Color ConvertAmbient(float[] torqueRGBA)
-        {
-            if (torqueRGBA == null || torqueRGBA.Length < 3)
-                return Color.black;
-
-            return new Color(
-                torqueRGBA[0],
-                torqueRGBA[1],
-                torqueRGBA[2],
-                1f
-            );
+            return intensity;
         }
 
         Quaternion ConvertDirection(float[] torqueDir)
@@ -912,13 +937,22 @@ namespace TS
             if (string.IsNullOrEmpty(assetPath))
                 return assetPath;
 
+            // Normalize slashes first
+            assetPath = assetPath.Replace('\\', '/');
+
+            // Remove trailing quote if present
+            if (assetPath.EndsWith("\""))
+                assetPath = assetPath.Substring(0, assetPath.Length - 1);
+
             // Remove leading slashes
             assetPath = assetPath.TrimStart('/');
 
             // --- Resolve special prefixes ---
             if (assetPath[0] == '.')
             {
-                assetPath = Path.GetDirectoryName(misPath) + assetPath.Substring(1);
+                // Relative to mission file
+                assetPath = Path.GetDirectoryName(misPath).Replace('\\', '/')
+                            + assetPath.Substring(1);
             }
             else
             {
@@ -929,14 +963,14 @@ namespace TS
                     : "marble/" + assetPath;
             }
 
-            // --- Remove ALL backslashes ---
-            assetPath = assetPath.Replace("\\", "");
-
-            if (assetPath.EndsWith("\""))
-                assetPath = assetPath.Substring(0, assetPath.Length - 1);
+            // --- Fix lbinteriors_* folders ---
+            assetPath = assetPath
+                .Replace("/lbinteriors_mbp/", "/interiors_mbp/")
+                .Replace("/lbinteriors_mbg/", "/interiors_mbg/");
 
             return assetPath;
         }
+
 
         public static TSObject ProcessObject(TSParser.Object_declContext objectDecl)
         {
@@ -980,6 +1014,5 @@ namespace TS
 
             return obj;
         }
-
     }
 }

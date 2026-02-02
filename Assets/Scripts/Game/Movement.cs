@@ -55,9 +55,6 @@ public class Movement : MonoBehaviour
 	[Space]
 	public Vector3 marbleVelocity;
 	public Vector3 marbleAngularVelocity;
-	public Texture collidedTexture;
-	[Space]
-	public PhysicMaterial defaultMaterial;
 
 	private float marbleRadius;
 	private Vector2 inputMovement()
@@ -194,10 +191,7 @@ public class Movement : MonoBehaviour
 		foreach (var item in FindObjectsOfType<MeshCollider>())
         {
 			if (!item.isTrigger)
-            {
-				item.material = defaultMaterial;
 				colTests.Add(item);
-			}
 		}
 
 		foreach (var mesh in colTests)
@@ -353,8 +347,8 @@ public class Movement : MonoBehaviour
 								normal = contactNormal.normalized,
 								collider = _meshCollider,
 								contactDistance = Mathf.Sqrt(contactDist),
-								restitution = _meshCollider.sharedMaterial?.bounciness ?? 0.5f,
-								friction = _meshCollider.sharedMaterial?.dynamicFriction ?? 0.5f,
+								restitution = _meshCollider.gameObject.GetComponent<FrictionComponent>()?.restitution ?? 1.0f,
+								friction = _meshCollider.gameObject.GetComponent<FrictionComponent>()?.friction ?? 1.0f,
 								velocity = colliderVelocity
 							};
 
@@ -683,6 +677,12 @@ public class Movement : MonoBehaviour
 						else
 						{
 							var restitution = bounceRestitution;
+
+							if (GameManager.instance.superBounceIsActive)
+								restitution = 0.9f;
+							if (GameManager.instance.shockAbsorberIsActive)
+								restitution = 0.01f;
+
 							restitution *= contacts[i].restitution;
 
 							// impact velocity = velocity INTO surface

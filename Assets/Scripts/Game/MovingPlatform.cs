@@ -18,11 +18,10 @@ public enum MovementMode
 public class SequenceNumber
 {
     public GameObject marker;
-    [HideInInspector] public Vector3 markerPos;
+    public Vector3 markerPos;
     public float secondsToNext;
 }
 
-[RequireComponent(typeof(Rigidbody))]
 public class MovingPlatform : MonoBehaviour
 {
     // Inspector
@@ -33,8 +32,6 @@ public class MovingPlatform : MonoBehaviour
     public float initialPosition = 0f;
     public float resolution = 0.1f; // spline density
 
-    // Internal
-    Rigidbody rb;
     Vector3 basePos;
 
     Vector3[] positions;
@@ -54,18 +51,15 @@ public class MovingPlatform : MonoBehaviour
     float initialSegmentEnd;
 
     Vector3 previousPosition;
-    [HideInInspector] public Vector3 platformVelocity;
-
     SequenceNumber[] splineSequence;
+
+    Rigidbody[] rigidbodies;
 
     // ─────────────────────────────────────────────
     // Initialization
     // ─────────────────────────────────────────────
     public void InitMovingPlatform()
     {
-        rb = GetComponent<Rigidbody>();
-        rb.isKinematic = true;
-
         basePos = transform.position;
 
         CacheMarkerPositions();
@@ -110,10 +104,10 @@ public class MovingPlatform : MonoBehaviour
         initialSegmentEnd = currentSegmentEnd;
 
         Vector3 startPos = basePos + positions[index];
-        rb.MovePosition(startPos);
+        SetPosition(startPos);
         previousPosition = startPos;
 
-        platformVelocity = Vector3.zero;
+        rigidbodies = GetComponentsInChildren<Rigidbody>();
     }
 
     public void ResetMP()
@@ -131,10 +125,16 @@ public class MovingPlatform : MonoBehaviour
             segmentStartTimes[index] + seq[index].secondsToNext;
 
         Vector3 pos = basePos + positions[index];
-        rb.MovePosition(pos);
+        SetPosition(pos);
         previousPosition = pos;
+    }
 
-        platformVelocity = Vector3.zero;
+    public void SetPosition(Vector3 pos)
+    {
+        if (rigidbodies == null) return;
+
+        foreach (Rigidbody rb in rigidbodies)
+            rb.MovePosition(pos);
     }
 
     // ─────────────────────────────────────────────
@@ -160,7 +160,6 @@ public class MovingPlatform : MonoBehaviour
             targetTime >= 0f &&
             Mathf.Approximately(time, targetTime))
         {
-            platformVelocity = Vector3.zero;
             return;
         }
 
@@ -203,7 +202,6 @@ public class MovingPlatform : MonoBehaviour
 
         if (index >= seq.Length - 1)
         {
-            platformVelocity = Vector3.zero;
             return;
         }
 
@@ -221,11 +219,8 @@ public class MovingPlatform : MonoBehaviour
                 t
             );
 
-        platformVelocity =
-            (newPosition - previousPosition) / Time.fixedDeltaTime;
-
         previousPosition = newPosition;
-        rb.MovePosition(newPosition);
+        SetPosition(newPosition);
     }
 
     // ─────────────────────────────────────────────

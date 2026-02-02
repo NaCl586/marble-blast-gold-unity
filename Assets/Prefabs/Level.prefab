@@ -1,0 +1,111 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1130814514835669847
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7009925986077745478}
+  - component: {fileID: 5326274267725393963}
+  m_Layer: 0
+  m_Name: Level
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7009925986077745478
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1130814514835669847}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5326274267725393963
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1130814514835669847}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bec63c7e30a457f8c34d990a8eafdff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MissionObjects:
+  - {fileID: 0}
+  interiorPrefab: {fileID: 6653497135140199419, guid: 3806fd2cf50ec474f88647ee66b42828,
+    type: 3}
+  movingPlatformPrefab: {fileID: 6653497135140199419, guid: b3629f223e3a4c24b812d1c5e997a0e1,
+    type: 3}
+  triggerGoToTarget: {fileID: 5334438111094356951, guid: 60040cafa6d0e664b917f2b628126663,
+    type: 3}
+  inBoundsTrigger: {fileID: 5334438111094356951, guid: 372e325f1d62eec4993f5a643e8ee7a1,
+    type: 3}
+  helpTriggerInstance: {fileID: 3145264287921035594, guid: 6a4b8c1fc01eb15448974f97e35c6afb,
+    type: 3}
+  outOfBoundsTrigger: {fileID: 0}
+  finishSignPrefab: {fileID: 5850111172839578870, guid: 9c88fed8e726d0e47ac147d8c9ef418a,
+    type: 3}
+  signPlainPrefab: {fileID: 4681130953073986573, guid: f7ea6d3c7747da74cb3a45bdff2809cb,
+    type: 3}
+  signPlainUpPrefab: {fileID: 4681130953073986573, guid: 26d5373af3bdee346b39da16fbc8b009,
+    type: 3}
+  signPlainDownPrefab: {fileID: 4681130953073986573, guid: a0e7f8e06aae70d46bc6111b0d24758c,
+    type: 3}
+  signPlainLeftPrefab: {fileID: 4681130953073986573, guid: 5a1ff7de3afb22946bb3782feae59dc4,
+    type: 3}
+  signPlainRightPrefab: {fileID: 4681130953073986573, guid: 4fdd243ab8f73334aa436ad6fa7941cf,
+    type: 3}
+  signCautionPrefab: {fileID: 261544149654555722, guid: b92ca3c31e3ceb146a96c413ada35f63,
+    type: 3}
+  signCautionCautionPrefab: {fileID: 261544149654555722, guid: ef0cbd68297bccb4da3bb8cf66ca3be8,
+    type: 3}
+  signCautionDangerPrefab: {fileID: 261544149654555722, guid: f46adf02dc209e1499ee9981d06dc247,
+    type: 3}
+  gemPrefab: {fileID: 2975894190698141840, guid: 247b70f391126b045a8d5964a576fa3f,
+    type: 3}
+  antiGravityPrefab: {fileID: 979331172554361627, guid: 4e96a5d04db152f489942a2adb85b36b,
+    type: 3}
+  superJumpPrefab: {fileID: 8578050620539726098, guid: 54d3391eb637b62419c8e281bf46bc42,
+    type: 3}
+  superSpeedPrefab: {fileID: 5884555302335599543, guid: 38c565a8500c0df459fad3dd8efb919c,
+    type: 3}
+  superBouncePrefab: {fileID: 2174758746369434111, guid: c86959fb04376b5488026dcb92266efd,
+    type: 3}
+  shockAbsorberPrefab: {fileID: 882404621344010672, guid: 223d570949928864db5cd0cfa21c4c36,
+    type: 3}
+  gyrocopterPrefab: {fileID: 6795438874697058231, guid: fc31b83135944cc46b697590a4cff6b7,
+    type: 3}
+  timeTravelPrefab: {fileID: 6709903032199683381, guid: 9a08629443bd4b649bdb2444375f8b83,
+    type: 3}
+  trapdoorPrefab: {fileID: 9139224675971453187, guid: 57833f265137b4147a0045febde57f3e,
+    type: 3}
+  roundBumperPrefab: {fileID: 4371505172029919544, guid: 599c23a8d1d3f7d4389b2d0c73771f66,
+    type: 3}
+  triangleBumperPrefab: {fileID: 6197722259391164959, guid: aea40361fe55de645a1729f5867c83dc,
+    type: 3}
+  ductFanPrefab: {fileID: 4750241748940862522, guid: 8c2d546dfe0124847a4a8486442a6d06,
+    type: 3}
+  tornadoPrefab: {fileID: 5500520526585647156, guid: 751c32212faf3fb489c78d73964205cd,
+    type: 3}
+  oilSlickPrefab: {fileID: 8764540366966745997, guid: a5b916fdb69986343bf2d733ff8d2e13,
+    type: 3}
+  landMinePrefab: {fileID: 3656766479995785901, guid: d8a8a5da6160dd14383952ecf2156899,
+    type: 3}
+  globalMarble: {fileID: 0}
+  startPad: {fileID: 0}
+  finishPad: {fileID: 0}
+  directionalLight: {fileID: 0}

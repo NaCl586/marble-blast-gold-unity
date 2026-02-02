@@ -32,6 +32,17 @@ public class CameraController : MonoBehaviour
 
         onCameraFinish.AddListener(FinishCameraPan);
         GravityModifier.onGravityChanged.AddListener(OnGravityChanged);
+
+        StartCoroutine(AssignReferences());
+    }
+
+    IEnumerator AssignReferences()
+    {
+        while (!Marble.instance)
+            yield return null;
+
+        marble = Marble.instance.transform;
+        offset = marble.position - transform.position;
     }
 
     public void OnGravityChanged(Vector3 oldDir, Vector3 newDir)

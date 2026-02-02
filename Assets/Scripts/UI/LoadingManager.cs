@@ -11,7 +11,8 @@ public class LoadingManager : MonoBehaviour
     public Slider loadingSlider;
     public TextMeshProUGUI loadingText;
 
-    AsyncOperation op;
+    AsyncOperation opGame;
+    AsyncOperation opSkybox;
     bool cancelRequested;
 
     void Start()
@@ -22,24 +23,46 @@ public class LoadingManager : MonoBehaviour
 
     IEnumerator LoadAsync()
     {
-        op = SceneManager.LoadSceneAsync("Game");
-        op.allowSceneActivation = false;
+        // 1️⃣ Load GAME first
+        opGame = SceneManager.LoadSceneAsync("Game", LoadSceneMode.Additive);
+        opGame.allowSceneActivation = false;
 
-        while (!op.isDone)
+        while (opGame.progress < 0.9f)
         {
-            float progress = Mathf.Clamp01(op.progress / 0.9f);
-            loadingSlider.value = progress;
+            if (isCancelling)
+                yield break;
 
-            if (op.progress >= 0.9f)
-            {
-                loadingSlider.value = 1f;
-                op.allowSceneActivation = true;
-            }
-
+            loadingSlider.value = Mathf.Clamp01(opGame.progress / 0.9f) * 0.5f;
             yield return null;
         }
 
+        // Activate Game
+        opGame.allowSceneActivation = true;
+        while (!opGame.isDone)
+            yield return null;
+
+        // 2️⃣ Load SKYBOX second
+        opSkybox = SceneManager.LoadSceneAsync(MissionInfo.instance.skybox, LoadSceneMode.Additive);
+        opSkybox.allowSceneActivation = false;
+
+        while (opSkybox.progress < 0.9f)
+        {
+            if (isCancelling)
+                yield break;
+
+            loadingSlider.value = 0.5f + Mathf.Clamp01(opSkybox.progress / 0.9f) * 0.5f;
+            yield return null;
+        }
+
+        // Activate Skybox
+        opSkybox.allowSceneActivation = true;
+        while (!opSkybox.isDone)
+            yield return null;
     }
+
+
+
+    bool isCancelling;
 
     private void Update()
     {
@@ -49,6 +72,14 @@ public class LoadingManager : MonoBehaviour
 
     public void CancelLoading()
     {
-        SceneManager.LoadScene("PlayMission");
+        if (isCancelling) return;
+
+        isCancelling = true;
+
+        // Stop the coroutine cleanly
+        StopAllCoroutines();
+
+        // Load PlayMission in Single mode
+        SceneManager.LoadScene("PlayMission", LoadSceneMode.Single);
     }
 }
