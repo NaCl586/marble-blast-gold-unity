@@ -102,7 +102,7 @@ public class GravityModifier : Powerups
         isRotating = false;
     }
 
-    Vector3 SafeLerp(Vector3 start, Vector3 target, float t)
+    static Vector3 SafeLerp(Vector3 start, Vector3 target, float t)
     {
         start.Normalize();
         target.Normalize();
@@ -111,23 +111,33 @@ public class GravityModifier : Powerups
 
         if (dot < -0.9999f)
         {
-            Vector3 lookVector = Camera.main != null
-                ? Camera.main.transform.forward
-                : Vector3.forward;
+            Vector3 intermediate = GetCameraClockwise90(start);
 
-            Vector3 projected = lookVector - Vector3.Dot(lookVector, start) * start;
-
-            if (projected.sqrMagnitude < 1e-6f)
-                projected = Vector3.Cross(start, Vector3.right);
-
-            projected.Normalize();
-
-            if (t < 0.5f)
-                return Vector3.Lerp(start, projected, t * 2f).normalized;
-            else
-                return Vector3.Lerp(projected, target, (t - 0.5f) * 2f).normalized;
+            return t < 0.5f
+                ? Vector3.Lerp(start, intermediate, t * 2f).normalized
+                : Vector3.Lerp(intermediate, target, (t - 0.5f) * 2f).normalized;
         }
 
         return Vector3.Lerp(start, target, t).normalized;
+    }
+
+    static Vector3 GetCameraClockwise90(Vector3 oldDir)
+    {
+        oldDir.Normalize();
+
+        Vector3 axis = Camera.main != null
+            ? Camera.main.transform.forward
+            : Vector3.forward;
+
+        // If axis is nearly parallel, choose a stable fallback
+        if (Mathf.Abs(Vector3.Dot(axis, oldDir)) > 0.999f)
+            axis = Camera.main != null
+                ? Camera.main.transform.up
+                : Vector3.up;
+
+        axis.Normalize();
+
+        // Clockwise as seen from camera
+        return Quaternion.AngleAxis(-90f, axis) * oldDir;
     }
 }

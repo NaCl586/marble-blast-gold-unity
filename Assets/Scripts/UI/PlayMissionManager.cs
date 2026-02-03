@@ -259,7 +259,10 @@ public class PlayMissionManager : MonoBehaviour
         MissionInfo.instance.artist = missions[number].artist;
         MissionInfo.instance.goldTime = missions[number].goldTime;
         MissionInfo.instance.ultimateTime = missions[number].ultimateTime;
-        MissionInfo.instance.skybox = missions[number].skyboxName;
+
+        string skyboxName = missions[number].skyboxName;
+        skyboxName = string.IsNullOrEmpty(skyboxName) ? "sky_day" : skyboxName;
+        MissionInfo.instance.skybox = Application.CanStreamedLevelBeLoaded(skyboxName) ? skyboxName : "sky_day";
 
         bestTimesText.text = string.Empty;
         for (int i = 0; i < 3; i++)
