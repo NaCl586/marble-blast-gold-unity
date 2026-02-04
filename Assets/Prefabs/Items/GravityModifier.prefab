@@ -152,6 +152,7 @@ MonoBehaviour:
   anim: {fileID: 96301081124053331}
   isActive: 1
   rotateMesh: 1
+  showHelpOnPickup: 0
   upVectorFrom: {fileID: 96301081830777587}
   upVectorTo: {fileID: 989020652508248212}
   transitionTime: 0.25
@@ -174,7 +175,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 0.008
+  m_Radius: 0.0125
   m_Center: {x: 0, y: 0, z: 0.002}
 --- !u!1 &989020652508248212
 GameObject:

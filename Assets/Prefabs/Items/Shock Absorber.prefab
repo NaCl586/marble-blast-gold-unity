@@ -91,7 +91,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.75, y: 0.75, z: 2}
+  m_Size: {x: 1, y: 1, z: 2.25}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &882404621344010678
 MonoBehaviour:
@@ -115,6 +115,8 @@ MonoBehaviour:
   skinnedMeshRenderer: {fileID: 4381227070492516807}
   anim: {fileID: 0}
   isActive: 1
+  rotateMesh: 1
+  showHelpOnPickup: 0
 --- !u!1 &1642445810378310384
 GameObject:
   m_ObjectHideFlags: 0

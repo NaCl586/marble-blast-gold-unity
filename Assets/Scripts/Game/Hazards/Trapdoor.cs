@@ -16,6 +16,15 @@ public class Trapdoor : MonoBehaviour
     private Marble marble;
     private float initXRot;
 
+    public void OnCollisionStay(Collision collision)
+    {
+        Movement movement = null;
+        if (collision.gameObject.TryGetComponent<Movement>(out movement))
+        {
+            OnCollisionWithMarble();
+        }
+    }
+
     public void OnCollisionWithMarble()
     {
         if (!isActive)
@@ -33,7 +42,7 @@ public class Trapdoor : MonoBehaviour
         anim.SetTrigger("Open");
         audioSource.PlayOneShot(trapdoorSfx);
 
-        yield return new WaitForSeconds(openTime + (50/30));
+        yield return new WaitForSeconds(openTime + (50 / 30));
 
         anim.SetTrigger("Close");
         audioSource.PlayOneShot(trapdoorSfx);
