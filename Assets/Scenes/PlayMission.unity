@@ -1867,7 +1867,6 @@ GameObject:
   - component: {fileID: 873342552}
   - component: {fileID: 873342551}
   - component: {fileID: 873342550}
-  - component: {fileID: 873342549}
   m_Layer: 5
   m_Name: UI
   m_TagString: Untagged
@@ -1875,58 +1874,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &873342549
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 873342548}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce56ffdd0c4a70549beb1e5e93dfe68d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  numbers:
-  - {fileID: 21300000, guid: e2876df9ec7491c4e9bf9d3592262b0b, type: 3}
-  - {fileID: 21300000, guid: e13e6b1cdb8c19447a036236bd638067, type: 3}
-  - {fileID: 21300000, guid: c1dd893d0dc550f4a871d072edac839d, type: 3}
-  - {fileID: 21300000, guid: a74f0684c3275884c8e5396819525bd7, type: 3}
-  - {fileID: 21300000, guid: 44cd3610fc171464cb50c5d182e46a77, type: 3}
-  - {fileID: 21300000, guid: 4e890354939281e46b14a7b6a71c02b2, type: 3}
-  - {fileID: 21300000, guid: 7d5e3ffa317a33d4aab3f59e60d72c8f, type: 3}
-  - {fileID: 21300000, guid: 4a4d33c5cf159d749a442e965d5bb5e5, type: 3}
-  - {fileID: 21300000, guid: 7d20b80ab2e2b12409d3d3020c29af83, type: 3}
-  - {fileID: 21300000, guid: 1db98f4bc217dcf4bbc7b12b2b5878e8, type: 3}
-  timerNumbers:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  centerText: {fileID: 0}
-  bottomText: {fileID: 0}
-  powerupIcon:
-  - {fileID: 8400000, guid: 767cb85301f1cd542bc130902b99e5f6, type: 2}
-  - {fileID: 8400000, guid: 4f95d9a135be3b144aa44be0cbeaf305, type: 2}
-  - {fileID: 8400000, guid: 6641cbd4fd8051f49a0212a03c30eaea, type: 2}
-  - {fileID: 8400000, guid: 6f282d7df174844489bba1be573ab19a, type: 2}
-  - {fileID: 8400000, guid: 47fe2bda9e22c2b4286f95b1ce9d33c6, type: 2}
-  - {fileID: 8400000, guid: 209ff298d6e71974caaef1fea0c3bcd8, type: 2}
-  powerupHUD: {fileID: 0}
-  targetGem:
-  - {fileID: 0}
-  - {fileID: 0}
-  currentGem:
-  - {fileID: 0}
-  - {fileID: 0}
-  gemCountUI: {fileID: 0}
-  readyImage: {fileID: 0}
-  setImage: {fileID: 0}
-  goImage: {fileID: 0}
-  outOfBoundsImage: {fileID: 0}
 --- !u!114 &873342550
 MonoBehaviour:
   m_ObjectHideFlags: 0
