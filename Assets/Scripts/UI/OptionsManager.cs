@@ -90,8 +90,8 @@ public class OptionsManager : MonoBehaviour
         marbleButton.onClick.AddListener(() => SetControlsMenu(0));
         mouseButton.onClick.AddListener(() => SetControlsMenu(2));
 
-        yesButton.onClick.AddListener(() => ForceMapping());
-        noButton.onClick.AddListener(() => CancelMapping());
+        yesButton.onClick.AddListener(() => CancelMapping());
+        noButton.onClick.AddListener(() => ForceMapping());
 
         cntrl_mous_freel.onValueChanged.AddListener(SetFreeLook);
         cntrl_mous_invrt.onValueChanged.AddListener(SetInvertYAxis);
